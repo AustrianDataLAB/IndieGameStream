@@ -1,12 +1,17 @@
 # IndieGameStream
 ## TL;DR
-IndieGameStream is an open source game streaming service with a focus on the indie game community. 
-Players can play various games without having to buy or download them. Players can stream them directly through the browser without having to worry about their computer hardware.
+IndieGameStream is cloud gaming platform that allows indie game developers to share their projects without the need to set up their own infrastructure.\
+Game developers can share their game without sharing the game files (binaries).\
+Users don’t have to download the game.
 
 ## Architecture
-(Simplified) \
-The project includes a frontend for game streaming, a control server that handles requests and communication with k8s, k8s for container management and a media gateway to map ingress routes.
-![Architecture](https://github.com/AustrianDataLAB/IndieGameStream/assets/34034087/33934c32-928f-41f8-b882-dbd79c55d740).
+Coming soon
+## Functionality
+### Developer
+![developer](https://github.com/AustrianDataLAB/IndieGameStream/assets/34034087/0cc897ab-8f72-41bc-bff1-c5d79d50b074)
+
+### User
+![user](https://github.com/AustrianDataLAB/IndieGameStream/assets/34034087/a28e71dd-3ef6-46e8-8eb8-f57523a6b9cd)
 
 ## Costs
 The planned budget for this project is 100€.
