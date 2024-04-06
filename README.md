@@ -4,6 +4,9 @@ IndieGameStream is cloud gaming platform that allows indie game developers to sh
 Game developers can share their game without sharing the game files (binaries).\
 Users don’t have to download the game.
 
+## User experience comic
+![ux-comic](https://github.com/AustrianDataLAB/IndieGameStream/assets/80053365/d8886fa9-8462-47f0-b1a0-48625181d833)
+
 ## Architecture
 Coming soon
 ## Functionality
