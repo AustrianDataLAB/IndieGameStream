@@ -8,7 +8,9 @@ Users don’t have to download the game.
 ![ux-comic](https://github.com/AustrianDataLAB/IndieGameStream/assets/80053365/d8886fa9-8462-47f0-b1a0-48625181d833)
 
 ## Architecture
-Coming soon
+![architektur](https://github.com/AustrianDataLAB/IndieGameStream/assets/34034087/c8b979e6-4f80-41c0-8e95-bfd70d16f823)
+
+
 ## Functionality
 ### Developer
 ![developer](https://github.com/AustrianDataLAB/IndieGameStream/assets/34034087/0cc897ab-8f72-41bc-bff1-c5d79d50b074)
