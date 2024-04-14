@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- stream_v1_game.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

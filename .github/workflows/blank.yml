@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+
+  pull_request:
+    branches:
+      - develop
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  test_frontend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend/indiestream
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # needed because project is not in root
+          cache-dependency-path: ./frontend/indiestream/package-lock.json
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm run ci:install
+
+      - name: Audit dependencies
+        run: npm run ci:audit
+
+      - name: Build
+        run: npm run build
+
+      # no tests yet
+      #- name: Test
+      #  run: npm run test
