@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: operator
 repo: indiegamestream.com/indiegamestream
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: indiegamestream.com
+  group: stream
+  kind: Game
+  path: indiegamestream.com/indiegamestream/api/v1
+  version: v1
 version: "3"
