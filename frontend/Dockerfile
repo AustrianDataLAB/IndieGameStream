@@ -1,11 +1,11 @@
 # Stage 1: Compile and Build angular
-FROM node:16 as build
+FROM node:20-alpine as build
 
 # Set working directory
 WORKDIR /app
 
 # Add the source code to app
-COPY . .
+COPY indiestream .
 
 # Install all the dependencies
 RUN npm install
@@ -17,7 +17,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy the build output to replace the default nginx contents
-COPY --from=build /app/dist/indiestream /usr/share/nginx/html
+COPY --from=build /app/dist/indiestream/browser /usr/share/nginx/html
 
 # Start nginx 
 CMD ["nginx", "-g", "daemon off;"]
