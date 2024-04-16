@@ -17,7 +17,9 @@ env:
   IMAGE_NAME: austriandatalab/indiestream-frontend
 jobs:
   test_frontend:
-    runs-on: self-hosted
+    runs-on: 
+      group: self-hosted
+      labels: best
     permissions:
       contents: write
       packages: write
