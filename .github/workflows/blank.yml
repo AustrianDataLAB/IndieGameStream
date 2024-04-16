@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - test-pipeline
 
   pull_request:
     branches:
@@ -39,6 +40,5 @@ jobs:
       - name: Build
         run: npm run build
 
-      # no tests yet
-      #- name: Test
-      #  run: npm run test
+      - name: Test
+        run: npm run test -- --configuration=ci
