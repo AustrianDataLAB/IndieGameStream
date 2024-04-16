@@ -2,6 +2,7 @@
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
 process.env.CHROME_BIN = require('puppeteer').executablePath();
+require('volkswagen');
 
 module.exports = function (config) {
   config.set({
