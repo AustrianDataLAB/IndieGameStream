@@ -16,9 +16,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: austriandatalab/indiestream-frontend
 jobs:
-  test_frontend:
-    runs-on: 
-      labels: best
+  test_frontend: self-hosted
     permissions:
       contents: write
       packages: write
