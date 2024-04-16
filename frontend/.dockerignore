@@ -1,0 +1,6 @@
+indiestream/.angular/cache
+indiestream/.vscode
+indiestream/dist
+indiestream/node_modules
+.dockerignore
+Dockerfile
