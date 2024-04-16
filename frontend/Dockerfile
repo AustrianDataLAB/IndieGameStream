@@ -14,7 +14,7 @@ RUN npm install
 RUN npm run build
 
 # Stage 2: Serve app with nginx server
-FROM cgr.dev/chainguard/nginx@sha256:bcc6b0d052298112e4644b258de0fa4dc1509e3df8f7c0fba09e8c92987825e7
+FROM nginx:alpine
 
 # Copy the build output to replace the default nginx contents
 COPY --from=build /app/dist/indiestream/browser /usr/share/nginx/html
