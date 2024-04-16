@@ -18,6 +18,10 @@ env:
 jobs:
   test_frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
 
     defaults:
       run:
