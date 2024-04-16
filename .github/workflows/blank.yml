@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: IndieGameStream/frontend
+  IMAGE_NAME: AustrianDataLAB/indiestream-frontend
 jobs:
   test_frontend:
     runs-on: ubuntu-latest
