@@ -18,7 +18,6 @@ env:
 jobs:
   test_frontend:
     runs-on: 
-      group: self-hosted
       labels: best
     permissions:
       contents: write
