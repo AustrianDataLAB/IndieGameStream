@@ -2,10 +2,10 @@
 FROM node:20-alpine as build
 
 # Set working directory
-WORKDIR /app
+WORKDIR /indiestream
 
 # Add the source code to app
-COPY indiestream .
+COPY indiestream ./
 
 # Install all the dependencies
 RUN npm install
