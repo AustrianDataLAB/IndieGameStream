@@ -20,7 +20,7 @@
     "@angular/platform-browser": "^17.3.0",
     "@angular/platform-browser-dynamic": "^17.3.0",
     "@angular/router": "^17.3.0",
-    "jade": "^1.11.0",
+    "npm": "^10.6.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.3"
@@ -34,10 +34,8 @@
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
+    "karma-verbose-reporter": "^0.0.8",
     "puppeteer": "~22.6.5",
     "typescript": "~5.4.2"
   }
