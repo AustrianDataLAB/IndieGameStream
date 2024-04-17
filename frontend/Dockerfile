@@ -1,5 +1,5 @@
 # Stage 1: Compile and Build angular
-FROM node:20-alpine as build
+FROM node:10-alpine as build
 
 # Set working directory
 WORKDIR /app
