@@ -17,7 +17,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy the build output to replace the default nginx contents
-COPY --from=build /app/dist/indiestream/browser /usr/share/nginx/html
+COPY --from=build /indiestream/dist/indiestream/browser /usr/share/nginx/html
 
 # Start nginx 
 CMD ["nginx", "-g", "daemon off;"]
