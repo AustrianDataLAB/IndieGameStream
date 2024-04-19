@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	streamv1 "indiegamestream.com/indiegamestream/api/v1"
+	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
 )
 
 var _ = Describe("Game Controller", func() {

@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	streamv1 "indiegamestream.com/indiegamestream/api/v1"
+	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
 	//+kubebuilder:scaffold:imports
 )
 

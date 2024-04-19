@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,17 +26,21 @@ import (
 
 // GameSpec defines the desired state of Game
 type GameSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Game. Edit game_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Name of the game
+	Name string `json:"name"`
+	// ExecutableURL is the URL of the game executable, which will be downloaded and mounted into the container
+	ExecutableURL string `json:"executableURL"`
 }
 
 // GameStatus defines the observed state of Game
 type GameStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// A list of pointers to currently runnings games
+	// +optional
+	Active []corev1.ObjectReference `json:"active,omitempty"`
+
+	// Information when was the last time the job was successfully scheduled.
+	// +optional
+	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

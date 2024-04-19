@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - stream_v1_game.yaml
+- stunner_v1_udproute.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

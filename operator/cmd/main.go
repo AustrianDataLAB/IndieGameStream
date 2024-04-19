@@ -34,8 +34,9 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	streamv1 "indiegamestream.com/indiegamestream/api/v1"
-	"indiegamestream.com/indiegamestream/internal/controller"
+	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
+	stunnerv1 "indiegamestream.com/indiegamestream/api/stunner/v1"
+	controller "indiegamestream.com/indiegamestream/internal/controller/stream"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -48,6 +49,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(streamv1.AddToScheme(scheme))
+	utilruntime.Must(stunnerv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

@@ -30,3 +30,15 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - stunner.l7mp.io
+  resources:
+  - udproutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

@@ -4,6 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: game-sample
+  name: game-sample2
 spec:
-  # TODO(user): Add fields here
+  name: "SPECGAME2"
+  executableURL: "https://example.com/game"
