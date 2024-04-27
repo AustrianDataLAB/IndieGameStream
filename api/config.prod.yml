@@ -1,0 +1,3 @@
+## PRODUCTIVE CONFIG
+PORT: 8080
+GIN_MODE: release #["release", "debug"]

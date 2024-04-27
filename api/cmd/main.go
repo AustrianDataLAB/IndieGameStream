@@ -1,9 +1,11 @@
 package main
 
 import (
-	"net/http"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+	"log"
+	"net/http"
 )
 
 var db = make(map[string]string)
@@ -67,8 +69,24 @@ func setupRouter() *gin.Engine {
 	return r
 }
 
+func loadEnv() {
+	viper.SetConfigFile("config.yml")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
+
 func main() {
+	//Load environment file
+	loadEnv()
+
+	//Set Gin-gonic to debug or release mode
+	gin.SetMode(viper.GetString("GIN_MODE"))
+
+	//Setup Routes
 	r := setupRouter()
+
 	// Listen and Server in 0.0.0.0:8080
-	r.Run(":8080")
+	r.Run(fmt.Sprintf(":%d", viper.GetInt("port")))
 }
