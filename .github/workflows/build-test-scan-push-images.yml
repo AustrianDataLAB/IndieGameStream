@@ -59,7 +59,7 @@ jobs:
       - name: Run test stage
         if: steps.check_test_stage.outputs.test_stage_exists == 'true'
         run: |
-          docker run ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}-test:${{ github.sha }}
+          docker run --rm ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}-test:${{ github.sha }}
 
       - name: Login to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
