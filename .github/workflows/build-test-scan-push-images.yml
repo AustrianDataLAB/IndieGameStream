@@ -37,7 +37,7 @@ jobs:
 
       - name: Check if test stage exists
         run: |
-          if [ -f "${{ matrix.image.directory }}/Dockerfile.test" ]; then
+          if grep -q -i -E '^\s*FROM\s+[^\s]+\s+AS\s+test\s*$' ${{ matrix.image.directory }}/Dockerfile ; then
             echo "Test stage exists, continue with build and push."
             echo "::set-output name=test_stage_exists::true"
           else
