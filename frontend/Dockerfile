@@ -18,7 +18,6 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 WORKDIR /app
 COPY indiestream .
 RUN npm run ci:install
-RUN npm run build
 # Run tests using headless chromium
 CMD ["npm", "run", "test", "--", "--configuration=ci"]
 
