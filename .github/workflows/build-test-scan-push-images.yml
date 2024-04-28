@@ -38,11 +38,11 @@ jobs:
       - name: Check if test stage exists
         run: |
           if grep -q -i -E '^\s*FROM\s+[^\s]+\s+AS\s+test\s*$' ${{ matrix.image.directory }}/Dockerfile ; then
-            echo "Test stage exists, continue with build and push."
-            echo "::set-output name=test_stage_exists::true"
+            echo "Test stage exists, continuing with tests."
+            echo "test_stage_exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Test stage does not exist, skipping build and push."
-            echo "::set-output name=test_stage_exists::false"
+            echo "Test stage does not exist, skipping tests."
+            echo "test_stage_exists=false" >> "$GITHUB_OUTPUT"
           fi
         id: check_test_stage
 
