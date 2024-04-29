@@ -185,5 +185,24 @@
 
 
 
+<div class="container-fluid" style="white-space: pre">
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Status</th>
+      <th>URL</th>
+    </tr>
+    <tr *ngFor="let game of games">
+      <td>{{ game.id }}</td>
+      <td>{{ game.title }}</td>
+      <td>{{ game.status }}</td>
+      <td>{{ game.url }}</td>
+    </tr>
+  </table>
+</div>
+
+
+
 
 <router-outlet />
