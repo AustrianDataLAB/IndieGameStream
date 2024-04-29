@@ -8,11 +8,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Add the directories which contain the golang scripts
-COPY cmd ./
+COPY . .
 COPY config.prod.yml ./config.yml
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /api
+RUN CGO_ENABLED=0 GOOS=linux go build -C cmd -o /api
 
 # Optional:
 # To bind to a TCP port, runtime parameters must be supplied to the docker command.
