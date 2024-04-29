@@ -7,9 +7,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/reference/dockerfile/#copy
-COPY *.go */*.go /*/*/*.go /*/*/*/*.go ./
+# Add the directories which contain the golang scripts
+COPY cmd ./
 COPY config.prod.yml ./config.yml
 
 # Build
