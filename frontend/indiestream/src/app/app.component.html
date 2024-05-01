@@ -183,8 +183,6 @@
   </div>
 </main>
 
-
-
 <div class="container-fluid" style="white-space: pre">
   <table>
     <tr>
@@ -192,12 +190,16 @@
       <th>Title</th>
       <th>Status</th>
       <th>URL</th>
+      <th>Refresh</th>
+      <th>Delete</th>
     </tr>
     <tr *ngFor="let game of games">
       <td>{{ game.id }}</td>
       <td>{{ game.title }}</td>
       <td>{{ game.status }}</td>
       <td>{{ game.url }}</td>
+      <td><button mat-flat-button color="primary" (click)="refreshGame(game.id)">Refresh</button></td>
+      <td><button mat-flat-button color="warn" (click)="deleteGame(game.id)">Delete</button></td>
     </tr>
   </table>
 </div>
