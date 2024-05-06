@@ -22,6 +22,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -213,6 +214,179 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	}
 
+	// Check if the service already exists, if not create a new one
+	foundSvc := &corev1.Service{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-lb-svc"}, foundSvc)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		svc, err := r.constructControllerLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+		err = r.Create(ctx, svc)
+		if err != nil {
+			log.Error(err, "unable to create Service for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get Service for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update service
+		svc, err := r.constructControllerLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
+		// Update the service spec if necessary
+		if false { //!reflect.DeepEqual(foundSvc.Spec, svc.Spec) { //TODO: Add real check based on game spec
+			foundSvc.Spec = svc.Spec
+			if err := r.Update(ctx, foundSvc); err != nil {
+				log.Error(err, "unable to update Service for Game", "game", game)
+				return ctrl.Result{}, err
+
+			}
+			log.V(1).Info("updated Service for Game", "game", game)
+		}
+	}
+
+	// Check if the deployment already exists, if not create a new one
+	foundWorker := &appsv1.Deployment{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-deployment"}, foundWorker)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		dep, err := r.constructWorkerDeploymentForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.Create(ctx, dep)
+		if err != nil {
+			log.Error(err, "unable to create Deployment for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get Deployment for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update deployment
+		dep, err := r.constructWorkerDeploymentForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
+
+		// Update the deployment spec if necessary
+		if false { //!reflect.DeepEqual(foundWorker.Spec, dep.Spec) { //TODO: Add real check based on game spec
+			foundWorker.Spec = dep.Spec
+			if err := r.Update(ctx, foundWorker); err != nil {
+				log.Error(err, "unable to update Deployment for Game", "game", game)
+				return ctrl.Result{}, err
+			}
+			log.V(1).Info("updated Deployment for Game", "game", game)
+		}
+
+	}
+
+	// Check if the service already exists, if not create a new one
+	foundSvcWorker := &corev1.Service{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-lb-svc"}, foundSvcWorker)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		svc, err := r.constructWorkerHTTPLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+		err = r.Create(ctx, svc)
+		if err != nil {
+			log.Error(err, "unable to create Service for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get Service for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update service
+		svc, err := r.constructWorkerHTTPLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
+		// Update the service spec if necessary
+		if false { //!reflect.DeepEqual(foundSvcWorker.Spec, svc.Spec) { //TODO: Add real check based on game spec
+			foundSvcWorker.Spec = svc.Spec
+			if err := r.Update(ctx, foundSvcWorker); err != nil {
+				log.Error(err, "unable to update Service for Game", "game", game)
+				return ctrl.Result{}, err
+
+			}
+			log.V(1).Info("updated Service for Game", "game", game)
+		}
+	}
+
+	// Check if the service already exists, if not create a new one
+	foundSvcWorkerUDP := &corev1.Service{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-ci-udp-svc"}, foundSvcWorkerUDP)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		svc, err := r.constructWorkerUDPLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+		err = r.Create(ctx, svc)
+		if err != nil {
+			log.Error(err, "unable to create Service for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+
+	} else if err != nil {
+		log.Error(err, "unable to get Service for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update service
+		svc, err := r.constructWorkerUDPLoadBalancerForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct service")
+			return ctrl.Result{}, err
+		}
+		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
+		// Update the service spec if necessary
+		if false { //!reflect.DeepEqual(foundSvcWorkerUDP.Spec, svc.Spec) { //TODO: Add real check based on game spec
+			foundSvcWorkerUDP.Spec = svc.Spec
+			if err := r.Update(ctx, foundSvcWorkerUDP); err != nil {
+				log.Error(err, "unable to update Service for Game", "game", game)
+				return ctrl.Result{}, err
+
+			}
+			log.V(1).Info("updated Service for Game", "game", game)
+		}
+	}
+
+	// Finally, we update the status block of the Game resource to reflect the current state of the world
+	// Note that Status is a subresource, so changes to it are ignored by the cache, hence the need to update it manually
+	//game.Status.Nodes = nodes
+	//game.Status.Phase = phase
+	//TODO: Add nginx ingress url to status
+	if err := r.Status().Update(ctx, game); err != nil {
+		log.Error(err, "unable to update Game status")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -316,6 +490,131 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 	return dep, nil
 }
 
+func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game) (*appsv1.Deployment, error) {
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "worker-deployment",
+			Namespace: game.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(2),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": "worker"},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"app": "worker"},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:    "worker",
+							Image:   "valniae/snekyrepo:crdi",
+							Command: []string{"worker"},
+							Args:    []string{"--v=5"},
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 9000,
+								},
+								{
+									ContainerPort: 8443,
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "CLOUD_GAME_EMULATOR_AUTOSAVESEC",
+									Value: "3",
+								},
+							}, //TODO mount game executable and config game config file
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, dep, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return dep, nil
+}
+
+func (r *GameReconciler) constructControllerLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "coordinator-lb-svc",
+			Namespace: game.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": "coordinator"},
+			Ports: []corev1.ServicePort{
+				{
+					Port:       8000,
+					TargetPort: intstr.FromInt(8000),
+				},
+			},
+			Type: corev1.ServiceTypeLoadBalancer,
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
+
+func (r *GameReconciler) constructWorkerHTTPLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "worker-lb-svc",
+			Namespace: game.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": "worker"},
+			Ports: []corev1.ServicePort{
+				{
+					Port:       9000,
+					TargetPort: intstr.FromInt(9000),
+				},
+			},
+			Type: corev1.ServiceTypeLoadBalancer,
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
+
+func (r *GameReconciler) constructWorkerUDPLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "worker-ci-udp-svc",
+			Namespace: game.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": "worker"},
+			Ports: []corev1.ServicePort{
+				{
+					Port:       8443,
+					TargetPort: intstr.FromInt(8443),
+				},
+			},
+			Type: corev1.ServiceTypeLoadBalancer,
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
+
 var (
 	udpRouteOwnerKey = ".metadata.controller"
 	apiGVStr         = streamv1.GroupVersion.String()
@@ -346,5 +645,6 @@ func (r *GameReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&streamv1.Game{}).
 		Owns(&stunnerv1.UDPRoute{}).
 		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
 		Complete(r)
 }
