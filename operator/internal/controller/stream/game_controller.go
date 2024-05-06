@@ -19,7 +19,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,6 +30,7 @@ import (
 	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
 	stunnerv1 "indiegamestream.com/indiegamestream/api/stunner/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // GameReconciler reconciles a Game object
@@ -53,13 +56,59 @@ type GameReconciler struct {
 func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var log = log.FromContext(ctx)
 
-	var game streamv1.Game
-	if err := r.Get(ctx, req.NamespacedName, &game); err != nil {
+	log.Info("Request", "Incoming", req)
+
+	game := &streamv1.Game{}
+	if err := r.Get(ctx, req.NamespacedName, game); err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			log.Info("Game resource not found. Ignoring since object must be deleted.")
+			return ctrl.Result{}, nil
+		}
 		log.Error(err, "unable to fetch Game")
-		// we'll ignore not-found errors, since they can't be fixed by an immediate
-		// requeue (we'll need to wait for a new notification), and we can get them
-		// on deleted requests.
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, err
+	}
+
+	// name of our custom finalizer
+	gameFinalizer := "game.stream.indiegamestream.com/finalizer"
+
+	// examine DeletionTimestamp to determine if object is under deletion
+	if game.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// to registering our finalizer.
+		if !controllerutil.ContainsFinalizer(game, gameFinalizer) {
+			controllerutil.AddFinalizer(game, gameFinalizer)
+			log.Info("Finalizer added", "Name", game.Name, "Finalizer", gameFinalizer)
+			if err := r.Update(ctx, game); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if controllerutil.ContainsFinalizer(game, gameFinalizer) {
+			// our finalizer is present, so lets handle any external dependency
+			log.Info("Game is being deleted", "Name", game.Name)
+
+			if err := r.deleteExternalResources(game); err != nil {
+				log.Error(err, "Error deleting external ressources")
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried.
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			controllerutil.RemoveFinalizer(game, gameFinalizer)
+			if err := r.Update(ctx, game); err != nil {
+				log.Error(err, "Error updating game after removing finalizer", "Name", game.Name)
+				return ctrl.Result{}, err
+			}
+		}
+
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
 	}
 
 	log.Info("Reconciling Game", "Name", game.Spec.Name, "ExecutableURL", game.Spec.ExecutableURL)
@@ -79,7 +128,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if len(udpRoutes.Items) == 0 {
 		// No udpRoutes found, define a new one
 
-		udpRoute, err := r.constructUDPRouteForGame(&game)
+		udpRoute, err := r.constructUDPRouteForGame(game)
 		if err != nil {
 			log.Error(err, "unable to construct udproute")
 			// don't bother requeuing until we get a change to the spec
@@ -94,9 +143,37 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 		log.V(1).Info("created UDPRoute for Game", "game", game)
 
+	} else if len(udpRoutes.Items) == 1 {
+		// We have exactly one udpRoute, make sure it's up to date
+		udpRoute := udpRoutes.Items[0]
+
+		//Create reference object from game
+
+		udpRouteRef, err := r.constructUDPRouteForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct udproute")
+			// don't bother requeuing until we get a change to the spec
+			return ctrl.Result{}, err
+		}
+
+		// Update the udpRoute spec if necessary
+		if !reflect.DeepEqual(udpRoute.Spec, udpRouteRef.Spec) {
+			udpRoute.Spec = udpRouteRef.Spec
+			if err := r.Update(ctx, &udpRoute); err != nil {
+				log.Error(err, "unable to update UDPRoute for Game", "game", game)
+				return ctrl.Result{}, err
+			}
+			log.V(1).Info("updated UDPRoute for Game", "game", game)
+		}
+	} else {
+		return ctrl.Result{}, fmt.Errorf("found multiple UDPRoute for the same Game %s/%s", game.Namespace, game.Name)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GameReconciler) deleteExternalResources(game *streamv1.Game) error {
+	return nil
 }
 
 func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunnerv1.UDPRoute, error) {
@@ -113,7 +190,7 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 		Spec: stunnerv1.UDPRouteSpec{
 			ParentRefs: []stunnerv1.ParentRefSpec{
 				{
-					Name:      "todo-gateway",
+					Name:      "game-gateway",
 					Namespace: game.Namespace,
 				},
 			},
@@ -121,7 +198,7 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 				{
 					BackendRefs: []stunnerv1.BackendRefSpec{
 						{
-							Name:      "todo-service-backend",
+							Name:      "game-service-backend",
 							Namespace: game.Namespace,
 						},
 					},
