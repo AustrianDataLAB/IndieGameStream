@@ -23,7 +23,7 @@ import (
 type ParentRefSpec struct {
 	// Name of the UDPRoute
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 type BackendRefSpec struct {
 	// Name of the UDPRoute

@@ -27,6 +27,8 @@ import (
 type GatewayConfigSpec struct {
 	UserName string `json:"userName"`
 	Password string `json:"password"`
+	AuthType string `json:"authType"`
+	Realm    string `json:"realm"`
 }
 
 // GatewayConfigStatus defines the observed state of GatewayConfig

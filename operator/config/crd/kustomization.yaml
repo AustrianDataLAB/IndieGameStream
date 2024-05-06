@@ -3,8 +3,8 @@
 # It should be run by config/default
 resources:
 - bases/stream.indiegamestream.com_games.yaml
-#- bases/stunner.indiegamestream.com_udproutes.yaml
-#- bases/stunner.indiegamestream.com_gatewayconfigs.yaml
+- bases/stunner.l7mp.io_udproutes.yaml
+- bases/stunner.l7mp.io_gatewayconfigs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

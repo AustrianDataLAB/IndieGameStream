@@ -174,12 +174,33 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, fmt.Errorf("found multiple UDPRoute for the same Game %s/%s", game.Namespace, game.Name)
 	}
 
+	// Get data for controller deployment creation
+
+	gatewayConfig := &stunnerv1.GatewayConfig{}
+	err := r.Get(context.TODO(), client.ObjectKey{
+		Namespace: game.Namespace,
+		Name:      "stunner-gatewayconfig",
+	}, gatewayConfig)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get GatewayConfig: %v", err))
+	}
+
+	fmt.Printf("Username: %s\n", gatewayConfig.Spec.UserName)
+	fmt.Printf("Password: %s\n", gatewayConfig.Spec.Password)
+
+	gatewayIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "udp-gateway")
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer IP for Gateway")
+		return ctrl.Result{}, err
+	}
+	log.Info("Gateway LoadBalancer IP", "IP", gatewayIP)
+
 	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err := r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-deployment"}, found)
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-deployment"}, found)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
-		dep, err := r.constructControllerDeploymentForGame(game)
+		dep, err := r.constructControllerDeploymentForGame(game, gatewayConfig, gatewayIP)
 		if err != nil {
 			log.Error(err, "unable to construct deployment")
 			return ctrl.Result{}, err
@@ -196,7 +217,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	} else {
 		//update deployment
-		dep, err := r.constructControllerDeploymentForGame(game)
+		dep, err := r.constructControllerDeploymentForGame(game, gatewayConfig, gatewayIP)
 		if err != nil {
 			log.Error(err, "unable to construct deployment")
 			return ctrl.Result{}, err
@@ -256,48 +277,6 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
-	// Check if the deployment already exists, if not create a new one
-	foundWorker := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-deployment"}, foundWorker)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep, err := r.constructWorkerDeploymentForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "unable to create Deployment for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "unable to get Deployment for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update deployment
-		dep, err := r.constructWorkerDeploymentForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
-
-		// Update the deployment spec if necessary
-		if false { //!reflect.DeepEqual(foundWorker.Spec, dep.Spec) { //TODO: Add real check based on game spec
-			foundWorker.Spec = dep.Spec
-			if err := r.Update(ctx, foundWorker); err != nil {
-				log.Error(err, "unable to update Deployment for Game", "game", game)
-				return ctrl.Result{}, err
-			}
-			log.V(1).Info("updated Deployment for Game", "game", game)
-		}
-
-	}
-
 	// Check if the service already exists, if not create a new one
 	foundSvcWorker := &corev1.Service{}
 	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-lb-svc"}, foundSvcWorker)
@@ -336,6 +315,63 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			}
 			log.V(1).Info("updated Service for Game", "game", game)
 		}
+	}
+
+	coordIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "coordinator-lb-svc")
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer IP for Coordinator")
+		return ctrl.Result{}, err
+	}
+	log.Info("Coordinator LoadBalancer IP", "IP", coordIP)
+
+	workerIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "worker-lb-svc")
+
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer IP for Worker")
+		return ctrl.Result{}, err
+	}
+	log.Info("Worker LoadBalancer IP", "IP", workerIP)
+
+	// Check if the deployment already exists, if not create a new one
+	foundWorker := &appsv1.Deployment{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-deployment"}, foundWorker)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		dep, err := r.constructWorkerDeploymentForGame(game, coordIP, workerIP)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.Create(ctx, dep)
+		if err != nil {
+			log.Error(err, "unable to create Deployment for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get Deployment for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update deployment
+		dep, err := r.constructWorkerDeploymentForGame(game, coordIP, workerIP)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
+
+		// Update the deployment spec if necessary
+		if false { //!reflect.DeepEqual(foundWorker.Spec, dep.Spec) { //TODO: Add real check based on game spec
+			foundWorker.Spec = dep.Spec
+			if err := r.Update(ctx, foundWorker); err != nil {
+				log.Error(err, "unable to update Deployment for Game", "game", game)
+				return ctrl.Result{}, err
+			}
+			log.V(1).Info("updated Deployment for Game", "game", game)
+		}
+
 	}
 
 	// Check if the service already exists, if not create a new one
@@ -379,21 +415,6 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
-	coordIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "coordinator-lb-svc", 10*time.Minute)
-	if err != nil {
-		log.Error(err, "unable to get LoadBalancer IP for Coordinator")
-		return ctrl.Result{}, err
-	}
-	log.Info("Coordinator LoadBalancer IP", "IP", coordIP)
-
-	workerIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "worker-lb-svc", 10*time.Minute)
-
-	if err != nil {
-		log.Error(err, "unable to get LoadBalancer IP for Worker")
-		return ctrl.Result{}, err
-	}
-	log.Info("Worker LoadBalancer IP", "IP", workerIP)
-
 	// Finally, we update the status block of the Game resource to reflect the current state of the world
 	// Note that Status is a subresource, so changes to it are ignored by the cache, hence the need to update it manually
 	//game.Status.Nodes = nodes
@@ -425,7 +446,7 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 		Spec: stunnerv1.UDPRouteSpec{
 			ParentRefs: []stunnerv1.ParentRefSpec{
 				{
-					Name:      "game-gateway",
+					Name:      "udp-gateway",
 					Namespace: game.Namespace,
 				},
 			},
@@ -433,7 +454,7 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 				{
 					BackendRefs: []stunnerv1.BackendRefSpec{
 						{
-							Name:      "game-service-backend",
+							Name:      "worker-ci-udp-svc",
 							Namespace: game.Namespace,
 						},
 					},
@@ -452,7 +473,7 @@ func int32Ptr(i int32) *int32 {
 	return &i
 }
 
-func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game) (*appsv1.Deployment, error) {
+func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coordinator-deployment",
@@ -481,16 +502,28 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 							},
 							Env: []corev1.EnvVar{
 								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_CREDENTIAL",
+									Value: gatewayConfig.Spec.Password,
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_URL",
+									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_USERNAME",
+									Value: gatewayConfig.Spec.UserName,
+								},
+								{
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_CREDENTIAL",
-									Value: "TODO_ADD_CREDS",
+									Value: gatewayConfig.Spec.Password,
 								},
 								{
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_URL",
-									Value: "turn:10.0.0.1:3478", //TODO: should be loadbalancer IP
+									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
 								},
 								{
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_USERNAME",
-									Value: "gilroy",
+									Value: gatewayConfig.Spec.UserName,
 								},
 							}, //TODO mount game executable and config game config file
 						},
@@ -507,7 +540,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 	return dep, nil
 }
 
-func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game) (*appsv1.Deployment, error) {
+func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, coordIP string, workerIP string) (*appsv1.Deployment, error) {
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "worker-deployment",
@@ -531,9 +564,6 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game) (
 							Args:    []string{"--v=5"},
 							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort: 9000,
-								},
-								{
 									ContainerPort: 8443,
 								},
 							},
@@ -541,6 +571,14 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game) (
 								{
 									Name:  "CLOUD_GAME_EMULATOR_AUTOSAVESEC",
 									Value: "3",
+								},
+								{
+									Name:  "CLOUD_GAME_WORKER_NETWORK_COORDINATORADDRESS",
+									Value: fmt.Sprintf("%s:8000", coordIP),
+								},
+								{
+									Name:  "CLOUD_GAME_WORKER_NETWORK_PUBLICADDRESS",
+									Value: workerIP,
 								},
 							}, //TODO mount game executable and config game config file
 						},
@@ -582,7 +620,7 @@ func (r *GameReconciler) constructControllerLoadBalancerForGame(game *streamv1.G
 	return svc, nil
 }
 
-func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespace, serviceName string, timeout time.Duration) (string, error) {
+func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespace, serviceName string) (string, error) {
 	var ip string
 
 	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
