@@ -26,4 +26,12 @@ resources:
   kind: UDPRoute
   path: stunner.l7mp.io/indiegamestream/api/stunner/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: indiegamestream.com
+  group: stunner
+  kind: GatewayConfig
+  path: indiegamestream.com/indiegamestream/api/stunner/v1
+  version: v1
 version: "3"

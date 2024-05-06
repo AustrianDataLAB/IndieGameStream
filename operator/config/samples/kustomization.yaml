@@ -2,4 +2,5 @@
 resources:
 - stream_v1_game.yaml
 #- stunner_v1_udproute.yaml
+#- stunner_v1_gatewayconfig.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
