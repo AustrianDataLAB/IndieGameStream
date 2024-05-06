@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,6 +28,8 @@ import (
 
 	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
 	stunnerv1 "indiegamestream.com/indiegamestream/api/stunner/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -55,7 +56,6 @@ type GameReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.2/pkg/reconcile
 func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var log = log.FromContext(ctx)
-
 	log.Info("Request", "Incoming", req)
 
 	game := &streamv1.Game{}
@@ -70,6 +70,8 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		log.Error(err, "unable to fetch Game")
 		return ctrl.Result{}, err
 	}
+
+	log.Info("Reconciling Game", "Name", game.Spec.Name, "ExecutableURL", game.Spec.ExecutableURL)
 
 	// name of our custom finalizer
 	gameFinalizer := "game.stream.indiegamestream.com/finalizer"
@@ -111,8 +113,6 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("Reconciling Game", "Name", game.Spec.Name, "ExecutableURL", game.Spec.ExecutableURL)
-
 	//TODO: use stunner namespace
 	var udpRoutes stunnerv1.UDPRouteList
 	if err := r.List(ctx, &udpRoutes, client.InNamespace(req.Namespace), client.MatchingFields{udpRouteOwnerKey: req.Name}); err != nil {
@@ -121,9 +121,11 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	//show all udpRoutes
-	for _, udpRoute := range udpRoutes.Items {
-		log.Info("udpRoute", "Name", udpRoute.Name, "parentRefs", udpRoute.Spec.ParentRefs, "rules", udpRoute.Spec.Rules)
-	}
+	/*
+		for _, udpRoute := range udpRoutes.Items {
+			log.Info("udpRoute", "Name", udpRoute.Name, "parentRefs", udpRoute.Spec.ParentRefs, "rules", udpRoute.Spec.Rules)
+		}
+	*/
 
 	if len(udpRoutes.Items) == 0 {
 		// No udpRoutes found, define a new one
@@ -157,7 +159,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 
 		// Update the udpRoute spec if necessary
-		if !reflect.DeepEqual(udpRoute.Spec, udpRouteRef.Spec) {
+		if false { //!reflect.DeepEqual(udpRoute.Spec, udpRouteRef.Spec) { //TODO: Add real check based on game spec
 			udpRoute.Spec = udpRouteRef.Spec
 			if err := r.Update(ctx, &udpRoute); err != nil {
 				log.Error(err, "unable to update UDPRoute for Game", "game", game)
@@ -167,6 +169,48 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	} else {
 		return ctrl.Result{}, fmt.Errorf("found multiple UDPRoute for the same Game %s/%s", game.Namespace, game.Name)
+	}
+
+	// Check if the deployment already exists, if not create a new one
+	found := &appsv1.Deployment{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-deployment"}, found)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		dep, err := r.constructControllerDeploymentForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.Create(ctx, dep)
+		if err != nil {
+			log.Error(err, "unable to create Deployment for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get Deployment for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		//update deployment
+		dep, err := r.constructControllerDeploymentForGame(game)
+		if err != nil {
+			log.Error(err, "unable to construct deployment")
+			return ctrl.Result{}, err
+		}
+
+		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
+
+		// Update the deployment spec if necessary
+		if false { //!reflect.DeepEqual(found.Spec, dep.Spec) { //TODO: Add real check based on game spec
+			found.Spec = dep.Spec
+			if err := r.Update(ctx, found); err != nil {
+				log.Error(err, "unable to update Deployment for Game", "game", game)
+				return ctrl.Result{}, err
+			}
+			log.V(1).Info("updated Deployment for Game", "game", game)
+		}
+
 	}
 
 	return ctrl.Result{}, nil
@@ -213,6 +257,64 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 
 	return udpRoute, nil
 }
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game) (*appsv1.Deployment, error) {
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "coordinator-deployment",
+			Namespace: game.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": "coordinator"},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"app": "coordinator"},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:    "coordinator",
+							Image:   "valniae/snekyrepo:crdi",
+							Command: []string{"coordinator"},
+							Args:    []string{"--v=5"},
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 8000,
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_CREDENTIAL",
+									Value: "TODO_ADD_CREDS",
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_URL",
+									Value: "turn:10.0.0.1:3478", //TODO: should be loadbalancer IP
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_USERNAME",
+									Value: "gilroy",
+								},
+							}, //TODO mount game executable and config game config file
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, dep, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return dep, nil
+}
 
 var (
 	udpRouteOwnerKey = ".metadata.controller"
@@ -243,5 +345,6 @@ func (r *GameReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&streamv1.Game{}).
 		Owns(&stunnerv1.UDPRoute{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
