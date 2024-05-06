@@ -19,10 +19,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -377,6 +379,21 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
+	coordIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "coordinator-lb-svc", 10*time.Minute)
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer IP for Coordinator")
+		return ctrl.Result{}, err
+	}
+	log.Info("Coordinator LoadBalancer IP", "IP", coordIP)
+
+	workerIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "worker-lb-svc", 10*time.Minute)
+
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer IP for Worker")
+		return ctrl.Result{}, err
+	}
+	log.Info("Worker LoadBalancer IP", "IP", workerIP)
+
 	// Finally, we update the status block of the Game resource to reflect the current state of the world
 	// Note that Status is a subresource, so changes to it are ignored by the cache, hence the need to update it manually
 	//game.Status.Nodes = nodes
@@ -563,6 +580,29 @@ func (r *GameReconciler) constructControllerLoadBalancerForGame(game *streamv1.G
 	}
 
 	return svc, nil
+}
+
+func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespace, serviceName string, timeout time.Duration) (string, error) {
+	var ip string
+
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
+		svc := &corev1.Service{}
+		if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: serviceName}, svc); err != nil {
+			return false, err
+		}
+		if len(svc.Status.LoadBalancer.Ingress) > 0 {
+			ip = svc.Status.LoadBalancer.Ingress[0].IP
+			if ip != "" {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+	return ip, nil
 }
 
 func (r *GameReconciler) constructWorkerHTTPLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
