@@ -40,7 +40,7 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	return r
 }
 
-func loadEnv() {
+func loadConfig() {
 	viper.SetConfigFile("config.yml")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -65,8 +65,8 @@ func setupDatabase() *sql.DB {
 }
 
 func main() {
-	//Load environment file
-	loadEnv()
+	//Load config file
+	loadConfig()
 
 	//Setup database
 	db := setupDatabase()
