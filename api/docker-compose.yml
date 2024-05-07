@@ -1,0 +1,39 @@
+#The docker-compose is for local deployment.
+#DON'T USE IT IN PRODUCTION IT CONTAINS HARDCODED PASSWORDS
+services:
+  mysql:
+    image: 'bitnami/mysql:8.3.0'
+    environment:
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=Root#123
+      - MYSQL_DATABASE=api
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./internal/database:/bitnami/mysql/data
+    networks:
+      - api
+    healthcheck:
+      test: mysql --user=root --password=Root#123 -e 'SELECT * FROM mysql.time_zone'
+    restart: on-failure
+    #command: # fix from https://github.com/bitnami/containers/issues/44854#issuecomment-1800945882
+    #  - "/opt/bitnami/mysql/bin/mysqld"
+    #  - "--defaults-file=/opt/bitnami/mysql/conf/my.cnf"
+    #  - "--basedir=/opt/bitnami/mysql"
+    #  - "--datadir=/bitnami/mysql/data"
+    #  - "--socket=/opt/bitnami/mysql/tmp/mysql.sock"
+    #  - "--pid-file=/opt/bitnami/mysql/tmp/mysqld.pid"
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    networks:
+      - api
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  api:
+    driver: bridge

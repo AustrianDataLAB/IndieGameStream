@@ -1,3 +1,9 @@
 ## PRODUCTIVE CONFIG
 PORT: 8080
 GIN_MODE: release #["release", "debug"]
+DATABASE:
+  NAME: api #database name
+  USER: root #This login name is just for local deployment. TODO set it in productive deployment
+  PASSWORD: Root#123 #This password is just for local deployment. TODO set it in productive deployment
+  HOST: mysql
+  PORT: 3306

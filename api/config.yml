@@ -3,7 +3,7 @@ GIN_MODE: debug #["release", "debug"]
 DATABASE:
   NAME: api #database name
   USER: root #login name
-  PASSWORD: Root#123
-  HOST: localhost
+  PASSWORD: Root#123 #This password is of course not production. Just local deployment
+  HOST: mysql
   PORT: 3306
 
