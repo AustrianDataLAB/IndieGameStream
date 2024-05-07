@@ -9,7 +9,7 @@ RUN go mod download
 
 # Add the directories which contain the golang scripts
 COPY . .
-COPY config.prod.yml ./config.yml
+COPY config.deployment.yml ./config.yml
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -C cmd -o /api
