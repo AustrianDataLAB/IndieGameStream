@@ -52,7 +52,7 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 // FindByID finds a game with a specific id or nil if the game has not been found.
 func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 	var game models.Game
-	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id)n.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
+	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
