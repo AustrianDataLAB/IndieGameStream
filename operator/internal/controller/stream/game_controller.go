@@ -192,6 +192,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// Note that Status is a subresource, so changes to it are ignored by the cache, hence the need to update it manually
 	//game.Status.Nodes = nodes
 	//game.Status.Phase = phase
+	game.Status.URL = fmt.Sprintf("http://%s:8000", coordIP)
 	//TODO: Add nginx ingress url to status
 	if err := r.Status().Update(ctx, game); err != nil {
 		log.Error(err, "unable to update Game status")

@@ -17,7 +17,6 @@ limitations under the License.
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,16 +32,12 @@ type GameSpec struct {
 }
 
 // GameStatus defines the observed state of Game
-type GameStatus struct {
-	// A list of pointers to currently runnings games
-	// +optional
-	Active []corev1.ObjectReference `json:"active,omitempty"`
 
-	// Information when was the last time the job was successfully scheduled.
-	// +optional
-	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
+type GameStatus struct {
+	URL string `json:"url"`
 }
 
+//+kubebuilder:printcolumn:name="URL",type="string",JSONPath=`.status.url`
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
