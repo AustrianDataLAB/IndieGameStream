@@ -14,12 +14,12 @@ import (
 	"net/http"
 )
 
-func setupRouter() *gin.Engine {
+func setupRouter(db *sql.DB) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
 
 	//Setup Repositories
-	gamesRepository := repositories.GameRepository()
+	gamesRepository := repositories.GameRepository(db)
 	gamesService := services.GameService(gamesRepository)
 	gamesController := controllers.GameController(gamesService)
 

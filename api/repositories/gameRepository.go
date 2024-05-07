@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"api/models"
-	"api/shared"
+	"database/sql"
 	"github.com/google/uuid"
 )
 
@@ -14,53 +14,93 @@ type IGameRepository interface {
 }
 
 type gameRepository struct {
-	//TODO add database
+	db *sql.DB
 }
 
-func GameRepository() IGameRepository {
+func GameRepository(db *sql.DB) IGameRepository {
 	return &gameRepository{
-		//TODO add database
+		db: db,
 	}
 }
 
+// FindAll returns all games from the database or (nil, err) if an error occurred.
 func (g gameRepository) FindAll() ([]models.Game, error) {
-	//TODO implement me
-	return []models.Game{
-		{
-			ID:              uuid.New(),
-			Title:           "Mock1",
-			StorageLocation: "Mock1",
-			Status:          shared.Status_Installed,
-			Url:             "https://localhost:4200",
-		},
-		{
-			ID:              uuid.New(),
-			Title:           "Mock2",
-			StorageLocation: "Mock2",
-			Status:          shared.Status_Installed,
-			Url:             "https://localhost:4200",
-		},
-	}, nil
+	query, err := g.db.Query("SELECT * FROM games")
+	if err != nil {
+		return nil, err
+	}
+	defer query.Close()
+
+	var games []models.Game
+	for query.Next() {
+		var game models.Game
+		err = query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
+		if err != nil {
+			return nil, err
+		}
+		games = append(games, game)
+	}
+
+	err = query.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return games, nil
 }
 
-func (g gameRepository) FindByID(id uuid.UUID) (models.Game, error) {
-	//TODO implement me
-	return models.Game{
-		ID:              id,
-		Title:           "Mock",
-		StorageLocation: "Mock",
-		Status:          shared.Status_Installed,
-		Url:             "https://localhost:4200",
-	}, nil
+// FindByID finds a game with a specific id or nil if the game has not been found.
+func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
+	var game models.Game
+	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id)n.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &game, nil
 }
 
-func (g gameRepository) Save(game models.Game) (models.Game, error) {
-	//TODO implement me
-	game.ID = uuid.New()
-	return game, nil
+// Save will update the database entry if the game is already in the database.
+// If not it will create an uuid and save it in the database.
+func (g gameRepository) Save(game *models.Game) error {
+	if game.ID != uuid.Nil {
+		//Check if uuid is already in database
+		existing, err := g.FindByID(game.ID)
+		if err != nil {
+			return err
+		}
+
+		if existing != nil {
+			//If yes, update the existing entry
+			stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")
+			if err != nil {
+				return err
+			}
+
+			_, err = stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID)
+			return err
+		}
+	} else {
+		game.ID = uuid.New()
+	}
+
+	//If not create a new one
+	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url) VALUES (?,?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url)
+
+	return err
 }
 
 func (g gameRepository) Delete(id uuid.UUID) error {
-	//TODO implement me
-	return nil
+	stmt, err := g.db.Prepare("DELETE FROM games WHERE ID = ?")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(id)
+	return err
 }
