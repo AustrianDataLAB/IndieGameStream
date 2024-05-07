@@ -8,8 +8,8 @@ import (
 
 type IGameRepository interface {
 	FindAll() ([]models.Game, error)
-	FindByID(id uuid.UUID) (models.Game, error)
-	Save(game models.Game) (models.Game, error)
+	FindByID(id uuid.UUID) (*models.Game, error)
+	Save(game *models.Game) error
 	Delete(id uuid.UUID) error
 }
 
