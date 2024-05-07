@@ -49,6 +49,10 @@ func (g gameController) GetGameById(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
+		if game == nil {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Game Not Found"})
+			return
+		}
 
 		//Map to dto
 		resultDto := dtos.GetGameByIdResponseBody{}
