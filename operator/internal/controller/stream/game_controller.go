@@ -97,7 +97,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			// our finalizer is present, so lets handle any external dependency
 			log.Info("Game is being deleted", "Name", game.Name)
 
-			if err := r.deleteExternalResources(game); err != nil {
+			if err := r.deleteExternalResources(ctx, game); err != nil {
 				log.Error(err, "Error deleting external ressources")
 				// if fail to delete the external dependency here, return with error
 				// so that it can be retried.
@@ -115,70 +115,23 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil
 	}
+	workerName := fmt.Sprintf("worker-lb-svc-%s", game.Name)
+	coordinatorName := fmt.Sprintf("coordinator-lb-svc-%s", game.Name)
+	udpRouteName := fmt.Sprintf("udproute-%s", game.Name)
+	deploymentCoordName := fmt.Sprintf("deployment-coord-%s", game.Name)
+	deploymentWorkerName := fmt.Sprintf("deployment-worker-%s", game.Name)
+	workerUDPName := fmt.Sprintf("worker-ci-udp-svc-%s", game.Name)
 
-	//TODO: use stunner namespace
-	var udpRoutes stunnerv1.UDPRouteList
-	if err := r.List(ctx, &udpRoutes, client.InNamespace(req.Namespace), client.MatchingFields{udpRouteOwnerKey: req.Name}); err != nil {
-		log.Error(err, "unable to list child Jobs")
-		return ctrl.Result{}, err
-	}
-
-	//show all udpRoutes
-	/*
-		for _, udpRoute := range udpRoutes.Items {
-			log.Info("udpRoute", "Name", udpRoute.Name, "parentRefs", udpRoute.Spec.ParentRefs, "rules", udpRoute.Spec.Rules)
-		}
-	*/
-
-	if len(udpRoutes.Items) == 0 {
-		// No udpRoutes found, define a new one
-
-		udpRoute, err := r.constructUDPRouteForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct udproute")
-			// don't bother requeuing until we get a change to the spec
-			return ctrl.Result{}, err
-		}
-
-		// ...and create it on the cluster
-		if err := r.Create(ctx, udpRoute); err != nil {
-			log.Error(err, "unable to create UDPRoute for Gamne", "game", game)
-			return ctrl.Result{}, err
-		}
-
-		log.V(1).Info("created UDPRoute for Game", "game", game)
-
-	} else if len(udpRoutes.Items) == 1 {
-		// We have exactly one udpRoute, make sure it's up to date
-		udpRoute := udpRoutes.Items[0]
-
-		//Create reference object from game
-
-		udpRouteRef, err := r.constructUDPRouteForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct udproute")
-			// don't bother requeuing until we get a change to the spec
-			return ctrl.Result{}, err
-		}
-
-		// Update the udpRoute spec if necessary
-		if false { //!reflect.DeepEqual(udpRoute.Spec, udpRouteRef.Spec) { //TODO: Add real check based on game spec
-			udpRoute.Spec = udpRouteRef.Spec
-			if err := r.Update(ctx, &udpRoute); err != nil {
-				log.Error(err, "unable to update UDPRoute for Game", "game", game)
-				return ctrl.Result{}, err
-			}
-			log.V(1).Info("updated UDPRoute for Game", "game", game)
-		}
-	} else {
-		return ctrl.Result{}, fmt.Errorf("found multiple UDPRoute for the same Game %s/%s", game.Namespace, game.Name)
+	result, err := r.ensureResource(ctx, game, "UDPRoute", udpRouteName, game.Namespace, workerUDPName)
+	if err != nil {
+		return result, err
 	}
 
 	// Get data for controller deployment creation
 
 	gatewayConfig := &stunnerv1.GatewayConfig{}
-	err := r.Get(context.TODO(), client.ObjectKey{
-		Namespace: game.Namespace,
+	err = r.Get(ctx, client.ObjectKey{
+		Namespace: "stunner",
 		Name:      "stunner-gatewayconfig",
 	}, gatewayConfig)
 	if err != nil {
@@ -188,143 +141,36 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	fmt.Printf("Username: %s\n", gatewayConfig.Spec.UserName)
 	fmt.Printf("Password: %s\n", gatewayConfig.Spec.Password)
 
-	gatewayIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "udp-gateway")
+	gatewayIP, err := waitForLoadBalancerIP(ctx, r.Client, "stunner", "udp-gateway")
 	if err != nil {
 		log.Error(err, "unable to get LoadBalancer IP for Gateway")
 		return ctrl.Result{}, err
 	}
 	log.Info("Gateway LoadBalancer IP", "IP", gatewayIP)
 
-	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-deployment"}, found)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep, err := r.constructControllerDeploymentForGame(game, gatewayConfig, gatewayIP)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "unable to create Deployment for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "unable to get Deployment for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update deployment
-		dep, err := r.constructControllerDeploymentForGame(game, gatewayConfig, gatewayIP)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
-
-		// Update the deployment spec if necessary
-		if false { //!reflect.DeepEqual(found.Spec, dep.Spec) { //TODO: Add real check based on game spec
-			found.Spec = dep.Spec
-			if err := r.Update(ctx, found); err != nil {
-				log.Error(err, "unable to update Deployment for Game", "game", game)
-				return ctrl.Result{}, err
-			}
-			log.V(1).Info("updated Deployment for Game", "game", game)
-		}
-
+	result, err = r.ensureResource(ctx, game, "Deployment-Coordinator", deploymentCoordName, game.Namespace, gatewayConfig, gatewayIP)
+	if err != nil {
+		return result, err
 	}
 
-	// Check if the service already exists, if not create a new one
-	foundSvc := &corev1.Service{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "coordinator-lb-svc"}, foundSvc)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		svc, err := r.constructControllerLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-		err = r.Create(ctx, svc)
-		if err != nil {
-			log.Error(err, "unable to create Service for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "unable to get Service for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update service
-		svc, err := r.constructControllerLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
-		// Update the service spec if necessary
-		if false { //!reflect.DeepEqual(foundSvc.Spec, svc.Spec) { //TODO: Add real check based on game spec
-			foundSvc.Spec = svc.Spec
-			if err := r.Update(ctx, foundSvc); err != nil {
-				log.Error(err, "unable to update Service for Game", "game", game)
-				return ctrl.Result{}, err
-
-			}
-			log.V(1).Info("updated Service for Game", "game", game)
-		}
+	result, err = r.ensureResource(ctx, game, "Service", coordinatorName, game.Namespace, "coordinator", int32(8000))
+	if err != nil {
+		return result, err
 	}
 
-	// Check if the service already exists, if not create a new one
-	foundSvcWorker := &corev1.Service{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-lb-svc"}, foundSvcWorker)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		svc, err := r.constructWorkerHTTPLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-		err = r.Create(ctx, svc)
-		if err != nil {
-			log.Error(err, "unable to create Service for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "unable to get Service for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update service
-		svc, err := r.constructWorkerHTTPLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
-		// Update the service spec if necessary
-		if false { //!reflect.DeepEqual(foundSvcWorker.Spec, svc.Spec) { //TODO: Add real check based on game spec
-			foundSvcWorker.Spec = svc.Spec
-			if err := r.Update(ctx, foundSvcWorker); err != nil {
-				log.Error(err, "unable to update Service for Game", "game", game)
-				return ctrl.Result{}, err
-
-			}
-			log.V(1).Info("updated Service for Game", "game", game)
-		}
+	result, err = r.ensureResource(ctx, game, "Service", workerName, game.Namespace, "worker", int32(9000))
+	if err != nil {
+		return result, err
 	}
 
-	coordIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "coordinator-lb-svc")
+	coordIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, coordinatorName)
 	if err != nil {
 		log.Error(err, "unable to get LoadBalancer IP for Coordinator")
 		return ctrl.Result{}, err
 	}
 	log.Info("Coordinator LoadBalancer IP", "IP", coordIP)
 
-	workerIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, "worker-lb-svc")
+	workerIP, err := waitForLoadBalancerIP(ctx, r.Client, game.Namespace, workerName)
 
 	if err != nil {
 		log.Error(err, "unable to get LoadBalancer IP for Worker")
@@ -332,87 +178,14 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 	log.Info("Worker LoadBalancer IP", "IP", workerIP)
 
-	// Check if the deployment already exists, if not create a new one
-	foundWorker := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-deployment"}, foundWorker)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep, err := r.constructWorkerDeploymentForGame(game, coordIP, workerIP)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "unable to create Deployment for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "unable to get Deployment for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update deployment
-		dep, err := r.constructWorkerDeploymentForGame(game, coordIP, workerIP)
-		if err != nil {
-			log.Error(err, "unable to construct deployment")
-			return ctrl.Result{}, err
-		}
-
-		//log.Info("Deployments", "Cur", found.Spec, "New", dep.Spec)
-
-		// Update the deployment spec if necessary
-		if false { //!reflect.DeepEqual(foundWorker.Spec, dep.Spec) { //TODO: Add real check based on game spec
-			foundWorker.Spec = dep.Spec
-			if err := r.Update(ctx, foundWorker); err != nil {
-				log.Error(err, "unable to update Deployment for Game", "game", game)
-				return ctrl.Result{}, err
-			}
-			log.V(1).Info("updated Deployment for Game", "game", game)
-		}
-
+	result, err = r.ensureResource(ctx, game, "Deployment-Worker", deploymentWorkerName, game.Namespace, coordIP, workerIP)
+	if err != nil {
+		return result, err
 	}
 
-	// Check if the service already exists, if not create a new one
-	foundSvcWorkerUDP := &corev1.Service{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: game.Namespace, Name: "worker-ci-udp-svc"}, foundSvcWorkerUDP)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		svc, err := r.constructWorkerUDPLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-		err = r.Create(ctx, svc)
-		if err != nil {
-			log.Error(err, "unable to create Service for Game", "game", game)
-			return ctrl.Result{}, err
-		}
-
-	} else if err != nil {
-		log.Error(err, "unable to get Service for Game", "game", game)
-		return ctrl.Result{}, err
-	} else {
-		//update service
-		svc, err := r.constructWorkerUDPLoadBalancerForGame(game)
-		if err != nil {
-			log.Error(err, "unable to construct service")
-			return ctrl.Result{}, err
-		}
-		//log.Info("Services", "Cur", foundSvc.Spec, "New", svc.Spec)
-		// Update the service spec if necessary
-		if false { //!reflect.DeepEqual(foundSvcWorkerUDP.Spec, svc.Spec) { //TODO: Add real check based on game spec
-			foundSvcWorkerUDP.Spec = svc.Spec
-			if err := r.Update(ctx, foundSvcWorkerUDP); err != nil {
-				log.Error(err, "unable to update Service for Game", "game", game)
-				return ctrl.Result{}, err
-
-			}
-			log.V(1).Info("updated Service for Game", "game", game)
-		}
+	result, err = r.ensureResource(ctx, game, "Service-UDP", workerUDPName, game.Namespace, "worker", int32(8443))
+	if err != nil {
+		return result, err
 	}
 
 	// Finally, we update the status block of the Game resource to reflect the current state of the world
@@ -428,33 +201,160 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *GameReconciler) deleteExternalResources(game *streamv1.Game) error {
+func (r *GameReconciler) ensureResource(ctx context.Context, game *streamv1.Game, resourceType string, resourceName string, resourceNamespace string, args ...interface{}) (ctrl.Result, error) {
+	var log = log.FromContext(ctx)
+	var resource client.Object
+	var constructFunc func(*streamv1.Game, string, ...interface{}) (client.Object, error)
+
+	switch resourceType {
+	case "UDPRoute":
+		resource = &stunnerv1.UDPRoute{}
+		resourceNamespace = "stunner"
+		constructFunc = func(g *streamv1.Game, resourceName string, params ...interface{}) (client.Object, error) {
+			if len(params) != 1 {
+				return nil, fmt.Errorf("invalid number of arguments for Deployment: expected 1, got %d", len(params))
+			}
+			serviceRef, ok := params[0].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for GatewayConfig")
+			}
+			udproute, err := r.constructUDPRouteForGame(g, resourceName, serviceRef)
+			return udproute, err
+		}
+	case "Deployment-Coordinator":
+		resource = &appsv1.Deployment{}
+		constructFunc = func(g *streamv1.Game, resourceName string, params ...interface{}) (client.Object, error) {
+			if len(params) != 2 {
+				return nil, fmt.Errorf("invalid number of arguments for Deployment: expected 2, got %d", len(params))
+			}
+			gatewayConfig, ok := params[0].(*stunnerv1.GatewayConfig)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for GatewayConfig")
+			}
+			gatewayIP, ok := params[1].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for gatewayIP")
+			}
+			return r.constructControllerDeploymentForGame(g, resourceName, gatewayConfig, gatewayIP)
+		}
+	case "Deployment-Worker":
+		resource = &appsv1.Deployment{}
+		constructFunc = func(g *streamv1.Game, resourceName string, params ...interface{}) (client.Object, error) {
+			if len(params) != 2 {
+				return nil, fmt.Errorf("invalid number of arguments for Deployment: expected 2, got %d", len(params))
+			}
+			coordIP, ok := params[0].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for coordIP")
+			}
+			workerIP, ok := params[1].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for gatewayIP")
+			}
+			return r.constructWorkerDeploymentForGame(g, resourceName, coordIP, workerIP)
+		}
+	case "Service":
+		resource = &corev1.Service{}
+		constructFunc = func(g *streamv1.Game, resourceName string, params ...interface{}) (client.Object, error) {
+			if len(params) != 2 {
+				return nil, fmt.Errorf("invalid number of arguments for service: expected 2, got %d", len(params))
+			}
+			label, ok := params[0].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for label")
+			}
+			port, ok := params[1].(int32)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for port")
+			}
+			udproute, err := r.constructLoadBalancer(g, resourceName, label, port)
+
+			return udproute, err
+		}
+	case "Service-UDP":
+		resource = &corev1.Service{}
+		constructFunc = func(g *streamv1.Game, resourceName string, params ...interface{}) (client.Object, error) {
+			if len(params) != 2 {
+				return nil, fmt.Errorf("invalid number of arguments for service: expected 2, got %d", len(params))
+			}
+			label, ok := params[0].(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for label")
+			}
+			port, ok := params[1].(int32)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter type for port")
+			}
+			udproute, err := r.constructLoadBalancerUDP(g, resourceName, label, port)
+
+			return udproute, err
+		}
+
+	// Add more cases as needed for different resource types
+	default:
+		return ctrl.Result{}, fmt.Errorf("unsupported resource type %s", resourceType)
+	}
+
+	err := r.Get(ctx, client.ObjectKey{Namespace: resourceNamespace, Name: resourceName}, resource)
+	if err != nil && errors.IsNotFound(err) {
+		newResource, err := constructFunc(game, resourceName, args...)
+		if err != nil {
+			log.Error(err, "unable to construct resource", "type", resourceType)
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new resource", "type", resourceType, "namespace", newResource.GetNamespace(), "name", newResource.GetName())
+		if err = r.Create(ctx, newResource); err != nil {
+			log.Error(err, "unable to create resource for Game", "game", game)
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		log.Error(err, "unable to get resource for Game", "game", game)
+		return ctrl.Result{}, err
+	} else {
+		// TODO: handle updates
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *GameReconciler) deleteExternalResources(ctx context.Context, game *streamv1.Game) error {
+	//manually delete udproute
+
+	udpRoute := &stunnerv1.UDPRoute{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: "stunner", Name: fmt.Sprintf("udproute-%s", game.Name)}, udpRoute)
+	if err != nil {
+		return nil
+	}
+	if err := r.Delete(ctx, udpRoute); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunnerv1.UDPRoute, error) {
+func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game, resourceName string, serviceRef string) (*stunnerv1.UDPRoute, error) {
 	// We want job names for a given nominal start time to have a deterministic name to avoid the same job being created twice
-	name := fmt.Sprintf("udproute-%s", game.Name)
 
 	udpRoute := &stunnerv1.UDPRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
-			Name:        name,
-			Namespace:   game.Namespace,
+			Name:        resourceName,
+			Namespace:   "stunner",
 		},
 		Spec: stunnerv1.UDPRouteSpec{
 			ParentRefs: []stunnerv1.ParentRefSpec{
 				{
 					Name:      "udp-gateway",
-					Namespace: game.Namespace,
+					Namespace: "stunner",
 				},
 			},
 			Rules: []stunnerv1.RulesSpec{
 				{
 					BackendRefs: []stunnerv1.BackendRefSpec{
 						{
-							Name:      "worker-ci-udp-svc",
+							Name:      serviceRef,
 							Namespace: game.Namespace,
 						},
 					},
@@ -463,9 +363,9 @@ func (r *GameReconciler) constructUDPRouteForGame(game *streamv1.Game) (*stunner
 		},
 	}
 
-	if err := ctrl.SetControllerReference(game, udpRoute, r.Scheme); err != nil {
-		return nil, err
-	}
+	//if err := ctrl.SetControllerReference(game, udpRoute, r.Scheme); err != nil {
+	//	return nil, err
+	//}
 
 	return udpRoute, nil
 }
@@ -473,10 +373,10 @@ func int32Ptr(i int32) *int32 {
 	return &i
 }
 
-func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
+func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, resourceName string, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "coordinator-deployment",
+			Name:      resourceName,
 			Namespace: game.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -502,18 +402,6 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_CREDENTIAL",
-									Value: gatewayConfig.Spec.Password,
-								},
-								{
-									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_URL",
-									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
-								},
-								{
-									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_USERNAME",
-									Value: gatewayConfig.Spec.UserName,
-								},
-								{
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_CREDENTIAL",
 									Value: gatewayConfig.Spec.Password,
 								},
@@ -523,6 +411,18 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 								},
 								{
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_USERNAME",
+									Value: gatewayConfig.Spec.UserName,
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_CREDENTIAL",
+									Value: gatewayConfig.Spec.Password,
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_URL",
+									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
+								},
+								{
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_USERNAME",
 									Value: gatewayConfig.Spec.UserName,
 								},
 							}, //TODO mount game executable and config game config file
@@ -540,10 +440,10 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 	return dep, nil
 }
 
-func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, coordIP string, workerIP string) (*appsv1.Deployment, error) {
+func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, resourceName string, coordIP string, workerIP string) (*appsv1.Deployment, error) {
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "worker-deployment",
+			Name:      resourceName,
 			Namespace: game.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -595,21 +495,46 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, c
 	return dep, nil
 }
 
-func (r *GameReconciler) constructControllerLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
+func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "coordinator-lb-svc",
+			Name:      name,
 			Namespace: game.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "coordinator"},
+			Selector: map[string]string{"app": selector},
 			Ports: []corev1.ServicePort{
 				{
-					Port:       8000,
-					TargetPort: intstr.FromInt(8000),
+					Port:       port,
+					TargetPort: intstr.FromInt32(port),
 				},
 			},
 			Type: corev1.ServiceTypeLoadBalancer,
+		},
+	}
+
+	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
+func (r *GameReconciler) constructLoadBalancerUDP(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: game.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": selector},
+			Ports: []corev1.ServicePort{
+				{
+					Protocol:   corev1.ProtocolUDP,
+					Port:       port,
+					TargetPort: intstr.FromInt32(port),
+				},
+			},
+			Type: corev1.ServiceTypeClusterIP,
 		},
 	}
 
@@ -643,56 +568,6 @@ func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespa
 	return ip, nil
 }
 
-func (r *GameReconciler) constructWorkerHTTPLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "worker-lb-svc",
-			Namespace: game.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "worker"},
-			Ports: []corev1.ServicePort{
-				{
-					Port:       9000,
-					TargetPort: intstr.FromInt(9000),
-				},
-			},
-			Type: corev1.ServiceTypeLoadBalancer,
-		},
-	}
-
-	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
-		return nil, err
-	}
-
-	return svc, nil
-}
-
-func (r *GameReconciler) constructWorkerUDPLoadBalancerForGame(game *streamv1.Game) (*corev1.Service, error) {
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "worker-ci-udp-svc",
-			Namespace: game.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "worker"},
-			Ports: []corev1.ServicePort{
-				{
-					Port:       8443,
-					TargetPort: intstr.FromInt(8443),
-				},
-			},
-			Type: corev1.ServiceTypeLoadBalancer,
-		},
-	}
-
-	if err := ctrl.SetControllerReference(game, svc, r.Scheme); err != nil {
-		return nil, err
-	}
-
-	return svc, nil
-}
-
 var (
 	udpRouteOwnerKey = ".metadata.controller"
 	apiGVStr         = streamv1.GroupVersion.String()
@@ -721,7 +596,7 @@ func (r *GameReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&streamv1.Game{}).
-		Owns(&stunnerv1.UDPRoute{}).
+		//Owns(&stunnerv1.UDPRoute{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Complete(r)

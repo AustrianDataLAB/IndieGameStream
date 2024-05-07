@@ -8,26 +8,29 @@ spec:
     group: "stunner.l7mp.io"
     kind: GatewayConfig
     name: stunner-gatewayconfig
-    namespace: default
+    namespace: stunner
   description: "STUNner is a WebRTC ingress gateway for Kubernetes"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: udp-gateway
-  namespace: default
+  namespace: stunner
 spec:
   gatewayClassName: stunner-gatewayclass
   listeners:
     - name: udp-listener
       port: 3478
-      protocol: TURN-UDP
+      allowedRoutes:
+        namespaces:
+          from: All
+      protocol: UDP
 ---
 apiVersion: stunner.l7mp.io/v1
 kind: GatewayConfig
 metadata:
   name: stunner-gatewayconfig
-  namespace: default
+  namespace: stunner
 spec:
   realm: stunner.l7mp.io
   authType: static
