@@ -1,2 +1,9 @@
 PORT: 8080
 GIN_MODE: debug #["release", "debug"]
+DATABASE:
+  NAME: api #database name
+  USER: root #login name
+  PASSWORD: Root#123
+  HOST: localhost
+  PORT: 3306
+

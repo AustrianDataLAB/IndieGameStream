@@ -3,9 +3,12 @@ package main
 import (
 	"api/controllers"
 	"api/repositories"
+	"api/scripts"
 	"api/services"
+	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
@@ -45,15 +48,35 @@ func loadEnv() {
 	}
 }
 
+func setupDatabase() *sql.DB {
+	//Create database if it is not existing yet.
+	//We might have to remove this if we use an azure database
+	scripts.CreateDatabaseIfNotExists(viper.GetString("DATABASE.NAME"))
+	//Connect to the database
+	db := scripts.ConnectToDatabase()
+	//Check if database is online
+	err := db.Ping()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	//Check if we have new migrations and apply them
+	scripts.MigrateDatabase(db)
+	return db
+}
+
 func main() {
 	//Load environment file
 	loadEnv()
+
+	//Setup database
+	db := setupDatabase()
+	defer db.Close()
 
 	//Set Gin-gonic to debug or release mode
 	gin.SetMode(viper.GetString("GIN_MODE"))
 
 	//Setup Routes
-	r := setupRouter()
+	r := setupRouter(db)
 
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(fmt.Sprintf(":%d", viper.GetInt("port")))
