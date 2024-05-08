@@ -3,6 +3,7 @@ package controllers
 import (
 	"api/dtos"
 	"api/services"
+	"database/sql"
 	"fmt"
 	"github.com/dranikpg/dto-mapper"
 	"github.com/gin-gonic/gin"
@@ -87,6 +88,9 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 	if _uuid != uuid.Nil {
 		err := g.service.Delete(_uuid)
 		if err != nil { //TODO handle different errors
+			if err == sql.ErrNoRows {
+				c.JSON(http.StatusNotFound, gin.H{"message": "Game Not Found"})
+			}
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		} else {
 			c.Status(http.StatusNoContent)
