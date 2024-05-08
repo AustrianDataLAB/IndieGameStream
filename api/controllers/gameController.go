@@ -51,7 +51,7 @@ func (g gameController) GetGameById(c *gin.Context) {
 			return
 		}
 		if game == nil {
-			c.JSON(http.StatusNotFound, gin.H{"message": "Game Not Found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "Game not found"})
 			return
 		}
 
@@ -89,7 +89,7 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 		err := g.service.Delete(_uuid)
 		if err != nil { //TODO handle different errors
 			if err == sql.ErrNoRows {
-				c.JSON(http.StatusNotFound, gin.H{"message": "Game Not Found"})
+				c.JSON(http.StatusNotFound, gin.H{"message": "Game not found"})
 			}
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		} else {
