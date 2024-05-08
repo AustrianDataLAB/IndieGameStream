@@ -3,6 +3,7 @@ package repositories
 import (
 	"api/models"
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -96,11 +97,32 @@ func (g gameRepository) Save(game *models.Game) error {
 	return err
 }
 
+// Delete removes the entry with a specific id from the games database.
+// Or returns sql.ErrNoRows if the game is not existing.
 func (g gameRepository) Delete(id uuid.UUID) error {
 	stmt, err := g.db.Prepare("DELETE FROM games WHERE ID = ?")
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(id)
-	return err
+
+	return checkResult(stmt.Exec(id))
+}
+
+func checkResult(res sql.Result, err error) error {
+	if err != nil {
+		return err
+	}
+
+	return checkAffectedRows(res)
+}
+
+func checkAffectedRows(res sql.Result) error {
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
