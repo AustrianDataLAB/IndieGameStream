@@ -3,7 +3,6 @@ package repositories
 import (
 	"api/models"
 	"database/sql"
-	"errors"
 	"github.com/google/uuid"
 )
 
@@ -92,9 +91,8 @@ func (g gameRepository) Save(game *models.Game) error {
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url)
 
-	return err
+	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url))
 }
 
 // Delete removes the entry with a specific id from the games database.
