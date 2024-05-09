@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -44,15 +46,31 @@ func MigrateDatabase(db *sql.DB) {
 		log.Fatal(err)
 	}
 
-	//For each migration script
+	//Sort the list of fileNames
+	var fileNames []string
 	for _, file := range files {
+		fileNames = append(fileNames, file.Name())
+	}
+	sort.Strings(fileNames)
+
+	//For each migration script
+	for _, fileName := range fileNames {
+		//Check if its a valid filename
+		match, err := regexp.MatchString(fileName, `\d*_.*[.]sql`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !match {
+			continue
+		}
+
 		//If the file is not a .sql file, ignore it
-		if file.Name()[len(file.Name())-4:] != ".sql" {
+		if fileName[len(fileName)-4:] != ".sql" {
 			continue
 		}
 
 		//get its id
-		migrationId, err := strconv.Atoi(strings.Split(file.Name(), "_")[0])
+		migrationId, err := strconv.Atoi(strings.Split(fileName, "_")[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -60,13 +78,13 @@ func MigrateDatabase(db *sql.DB) {
 		if !shared.IntInSlice(migrationId, migrations) {
 
 			//Load the sql script
-			content, err := os.ReadFile("migrations/" + file.Name())
+			content, err := os.ReadFile("migrations/" + fileName)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			//Execute the sql script
-			log.Println("Executing migration: " + file.Name())
+			log.Println("Executing migration: " + fileName)
 			requests := strings.Split(string(content), ";")
 			for _, request := range requests {
 				if len(request) == 0 {
