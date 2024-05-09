@@ -79,8 +79,7 @@ func (g gameRepository) Save(game *models.Game) error {
 				return err
 			}
 
-			_, err = stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID)
-			return err
+			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID))
 		}
 	} else {
 		game.ID = uuid.New()
