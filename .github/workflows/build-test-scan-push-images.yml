@@ -24,6 +24,8 @@ jobs:
           # Add your images here (name of the component + directory that contains Dockerfile)
           - name: frontend
             directory: frontend
+          - name: api
+            directory: api
     runs-on: ubuntu-latest
     permissions:
       contents: write
