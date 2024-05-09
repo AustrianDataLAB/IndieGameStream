@@ -4,6 +4,6 @@ DATABASE:
   NAME: api #database name
   USER: root #login name
   PASSWORD: Root#123 #This password is of course not production. Just local deployment
-  HOST: mysql
+  HOST: localhost
   PORT: 3306
 
