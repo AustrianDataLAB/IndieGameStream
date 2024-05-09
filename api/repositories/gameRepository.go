@@ -31,7 +31,7 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 	}
 	defer query.Close()
 
-	var games []models.Game
+	var games = []models.Game{}
 	for query.Next() {
 		var game models.Game
 		err = query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
