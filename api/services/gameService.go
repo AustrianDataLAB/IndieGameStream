@@ -11,7 +11,7 @@ import (
 type IGameService interface {
 	FindAll() ([]models.Game, error)
 	FindByID(id uuid.UUID) (*models.Game, error)
-	Save(file *multipart.FileHeader) (*models.Game, error)
+	Save(file *multipart.FileHeader, title string) (*models.Game, error)
 	Delete(id uuid.UUID) error
 }
 
@@ -25,12 +25,12 @@ func (g gameService) FindAll() ([]models.Game, error) {
 
 func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) { return g.repository.FindByID(id) }
 
-func (g gameService) Save(file *multipart.FileHeader) (*models.Game, error) {
+func (g gameService) Save(file *multipart.FileHeader, title string) (*models.Game, error) {
 	//TODO save file
 
 	game := models.Game{
 		ID:              uuid.New(),
-		Title:           file.Filename,
+		Title:           title,
 		StorageLocation: "",
 		Status:          shared.Status_New,
 		Url:             "",

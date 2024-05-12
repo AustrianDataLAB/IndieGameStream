@@ -68,12 +68,18 @@ func (g gameController) GetGameById(c *gin.Context) {
 }
 
 func (g gameController) UploadGame(c *gin.Context) {
+
+	title := c.Query("title")
+	if len(title) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Title is required"})
+	}
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	}
 
-	_, err = g.service.Save(file)
+	_, err = g.service.Save(file, title)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
