@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [AppComponent, BrowserAnimationsModule],
     }).compileComponents();
   });
 
@@ -24,6 +25,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
+    console.log("------------------------------------------------------------------------------------");
+    console.error(compiled.querySelector('h1')?.textContent);
     expect(compiled.querySelector('h1')?.textContent).toContain('Hello, indiestream');
   });
 });
