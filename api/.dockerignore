@@ -1,3 +1,5 @@
 config.yml
 README.md
 .idea
+internal
+docker-compose.yml
