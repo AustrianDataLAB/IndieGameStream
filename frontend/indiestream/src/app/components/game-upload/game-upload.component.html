@@ -8,7 +8,7 @@
       <input type="file" class="input-file" (change)="onFileSelected($event)" #fileUpload>
       <mat-label> Chose game</mat-label>
       <input type="text" readonly matInput formControlName="filename">
-      <button mat-icon-button matSuffix color="primary"
+      <button type="button" mat-icon-button matSuffix color="primary"
               (click)="fileUpload.click()">
         <mat-icon>attach_file</mat-icon>
       </button>
