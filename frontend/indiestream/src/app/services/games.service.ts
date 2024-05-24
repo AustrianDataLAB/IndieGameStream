@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpEvent} from '@angular/common/http';
 import { Games, Game } from '../modules/games';
 import { Observable } from "rxjs";
 import { environment } from "../environment";
@@ -21,6 +21,13 @@ export class GamesService {
 
   deleteGame(id: string): void{
     this.http.delete(this.apiUrl + "/games/" + id + "/")
+  }
+
+  uploadGame(file: File): Observable<HttpEvent<Object>>{
+    return this.http.post(this.apiUrl + "/games/", file, {
+      reportProgress: true,
+      observe: 'events'
+    });
   }
 }
 

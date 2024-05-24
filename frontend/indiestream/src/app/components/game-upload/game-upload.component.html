@@ -1,0 +1,29 @@
+<form class="game-upload-container" [formGroup]="gameForm" (ngSubmit)="onUpload()">
+  <div class="input-fields">
+    <mat-form-field subscriptSizing="dynamic" class="input-title">
+      <mat-label>Title of your game</mat-label>
+      <input matInput type="text" formControlName="title">
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
+      <input type="file" class="input-file" (change)="onFileSelected($event)" #fileUpload>
+      <mat-label> Chose game</mat-label>
+      <input type="text" readonly matInput formControlName="filename">
+      <button type="button" mat-icon-button matSuffix color="primary"
+              (click)="fileUpload.click()">
+        <mat-icon>attach_file</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+  <div class="upload-game">
+    <div *ngIf="uploadProgress" class="progress-bar">
+      <mat-progress-bar mode="determinate"
+                        [value]="uploadProgress">
+      </mat-progress-bar>
+    </div>
+    <button mat-raised-button color="primary" type="submit">
+            <!--(click)="cancelUpload()"-->
+      Upload
+      <mat-icon>cloud_upload</mat-icon>
+    </button>
+  </div>
+</form>

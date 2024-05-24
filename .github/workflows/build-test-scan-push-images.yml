@@ -97,6 +97,7 @@ jobs:
           image-ref: '${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}:${{ github.sha }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          limit-severities-for-sarif: true
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
 
