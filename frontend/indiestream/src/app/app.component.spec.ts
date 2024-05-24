@@ -25,8 +25,6 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    console.log("------------------------------------------------------------------------------------");
-    console.error(compiled.querySelector('h1')?.textContent);
     expect(compiled.querySelector('h1')?.textContent).toContain('Hello, indiestream');
   });
 });
