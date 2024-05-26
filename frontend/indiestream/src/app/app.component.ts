@@ -6,46 +6,18 @@ import { CommonModule } from "@angular/common";
 import { MatButtonModule } from '@angular/material/button';
 import { HttpClientModule } from "@angular/common/http";
 import { GameUploadComponent} from "./components/game-upload/game-upload.component";
+import {GamesOverviewComponent} from "./components/games-overview/games-overview.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, MatButtonModule, HttpClientModule, GameUploadComponent],
+  imports: [RouterOutlet, CommonModule, MatButtonModule, HttpClientModule, GameUploadComponent, GamesOverviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit{
+export class AppComponent {
   title = 'indiestream';
   status: string = '';
 
-  public games: any;
-
-  constructor(private gamesService: GamesService) {  }
-
-  ngOnInit() {
-    this.getGames();
-  }
-
-  getGames() {
-    this.gamesService.getGames().subscribe(
-      response => {
-        this.games = response;
-        //console.log(this.games);
-      }
-    );
-  }
-
-  refreshGame(id: string) {
-    this.gamesService.getGame(id).subscribe(
-      response => {
-        this.games.map((game: Game) => this.games.find((resp: Game) => resp.id === game.id) || game);
-      }
-    )
-  }
-
-  deleteGame(id: string)  {
-    this.gamesService.deleteGame(id);
-    //TODO refresh?
-    //getGames():
-  }
+  constructor() {  }
 }
