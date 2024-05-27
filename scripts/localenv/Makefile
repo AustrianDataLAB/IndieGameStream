@@ -15,9 +15,9 @@ HELM_API=api
 
 .PHONY: *
 
-all: build_images load_images create_cluster install
+all: build_images create_cluster load_images add_metallb install
 
-multi_node: build_images load_images create_multinode_cluster install
+multi_node: build_images create_multinode_cluster load_images add_metallb install
 
 teardown: teardown_cluster delete_images
 
@@ -37,20 +37,23 @@ create_cluster:
 create_multinode_cluster:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-multinode-config.yaml
 
+add_metallb:
+	./add_metallb.sh
+
 teardown_cluster:
 	kind delete cluster --name $(CLUSTER_NAME)
 
 build_frontend:  
-	docker build ${ROOT_DIRECTORY}/$(FRONTEND_DIRECTORY)  -t $(FRONTEND_NAME) -f ${ROOT_DIRECTORY}/$(FRONTEND_DOCKERFILE)
+	docker build $(ROOT_DIRECTORY)/$(FRONTEND_DIRECTORY)  -t $(FRONTEND_NAME) -f $(ROOT_DIRECTORY)/$(FRONTEND_DOCKERFILE)
 
 build_api:
-	docker build ${ROOT_DIRECTORY}/$(API_DIRECTORY) -t $(API_NAME) -f ${ROOT_DIRECTORY}/$(FRONTEND_DOCKERFILE)
+	docker build $(ROOT_DIRECTORY)/$(API_DIRECTORY) -t $(API_NAME) -f $(ROOT_DIRECTORY)/$(API_DOCKERFILE)
 
 load_frontend:
-	kind load docker-image $(FRONTEND_NAME)
+	kind load docker-image $(FRONTEND_NAME) --name $(CLUSTER_NAME)
 
 load_api:
-	kind load docker_image $(API_NAME)
+	kind load docker-image $(API_NAME) --name $(CLUSTER_NAME)
 
 install_frontend:
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
@@ -59,3 +62,15 @@ install_frontend:
 install_api:
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
+
+uninstall_frontend:
+	helm uninstall $(FRONTEND_NAME)
+
+uninstall_api:
+	helm uninstall $(API_NAME)
+
+delete_frontend:
+	docker rmi $(FRONTEND_NAME)
+
+delete_api:
+	docker rmi $(API_NAME)
