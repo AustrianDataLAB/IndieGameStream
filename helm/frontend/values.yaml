@@ -2,7 +2,9 @@ appName: frontend
 
 replicas: 1
 
-imageName: ghcr.io/austriandatalab/indiegamestream/frontend
-imageLabel: latest
+image:
+  name: ghcr.io/austriandatalab/indiegamestream/frontend
+  label: latest
+  pullPolicy: IfNotPresent
 
 port: 80
