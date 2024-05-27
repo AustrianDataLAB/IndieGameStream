@@ -4,7 +4,6 @@ import (
 	"api/shared"
 	"database/sql"
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"regexp"
@@ -16,11 +15,11 @@ import (
 func ConnectToDatabase() *sql.DB {
 	// connect to db using standard Go database/sql API
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		viper.GetString("DATABASE.USER"),
-		viper.GetString("DATABASE.PASSWORD"),
-		viper.GetString("DATABASE.HOST"),
-		viper.GetString("DATABASE.PORT"),
-		viper.GetString("DATABASE.NAME"))
+		os.Getenv("MYSQL_ROOT_USER"),
+		os.Getenv("MYSQL_ROOT_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
+		os.Getenv("MYSQL_PORT"),
+		os.Getenv("MYSQL_DATABASE"))
 
 	db, err := sql.Open("mysql", connectionString)
 
@@ -102,7 +101,7 @@ func MigrateDatabase(db *sql.DB) {
 	log.Println("Finished migrations")
 }
 
-// getMigrationIds returns the Ids of migrations which have been applied to the database.
+// getMigrationIds returns the Ids of migrations which have been applied to the database
 func getMigrationIds(db *sql.DB) []int {
 	var migrations []int
 
@@ -133,10 +132,10 @@ func getMigrationIds(db *sql.DB) []int {
 func CreateDatabaseIfNotExists(database string) {
 	// connect to db using standard Go database/sql API
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/",
-		viper.GetString("DATABASE.USER"),
-		viper.GetString("DATABASE.PASSWORD"),
-		viper.GetString("DATABASE.HOST"),
-		viper.GetString("DATABASE.PORT"))
+		os.Getenv("MYSQL_ROOT_USER"),
+		os.Getenv("MYSQL_ROOT_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
+		os.Getenv("MYSQL_PORT"))
 
 	db, err := sql.Open("mysql", connectionString)
 

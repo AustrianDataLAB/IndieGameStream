@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	"os"
 )
 
 func setupRouter(db *sql.DB) *gin.Engine {
@@ -41,17 +42,17 @@ func setupRouter(db *sql.DB) *gin.Engine {
 }
 
 func loadConfig() {
-	viper.SetConfigFile("config.yml")
-	err := viper.ReadInConfig()
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(fmt.Sprintf("Failed to load .env file: %s", err))
+		log.Println("Environment variables will be used")
 	}
 }
 
 func setupDatabase() *sql.DB {
 	//Create database if it is not existing yet.
 	//We might have to remove this if we use an azure database
-	scripts.CreateDatabaseIfNotExists(viper.GetString("DATABASE.NAME"))
+	scripts.CreateDatabaseIfNotExists(os.Getenv("MYSQL_DATABASE"))
 	//Connect to the database
 	db := scripts.ConnectToDatabase()
 	//Check if database is online
@@ -73,11 +74,14 @@ func main() {
 	defer db.Close()
 
 	//Set Gin-gonic to debug or release mode
-	gin.SetMode(viper.GetString("GIN_MODE"))
+	gin.SetMode(os.Getenv("GIN_MODE"))
 
 	//Setup Routes
 	r := setupRouter(db)
 
 	// Listen and Server in 0.0.0.0:8080
-	r.Run(fmt.Sprintf(":%d", viper.GetInt("port")))
+	err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
