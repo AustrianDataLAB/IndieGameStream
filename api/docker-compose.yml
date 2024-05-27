@@ -12,13 +12,6 @@ services:
     healthcheck:
       test: mysqladmin ping --host=${MYSQL_HOST} --port=${MYSQL_PORT} --user=${MYSQL_ROOT_USER} --password=${MYSQL_ROOT_PASSWORD}
     restart: on-failure
-    #command: # fix from https://github.com/bitnami/containers/issues/44854#issuecomment-1800945882
-    #  - "/opt/bitnami/mysql/bin/mysqld"
-    #  - "--defaults-file=/opt/bitnami/mysql/conf/my.cnf"
-    #  - "--basedir=/opt/bitnami/mysql"
-    #  - "--datadir=/bitnami/mysql/data"
-    #  - "--socket=/opt/bitnami/mysql/tmp/mysql.sock"
-    #  - "--pid-file=/opt/bitnami/mysql/tmp/mysqld.pid"
   api:
     env_file: .env.deployment
     build: .
