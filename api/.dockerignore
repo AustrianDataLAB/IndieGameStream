@@ -1,4 +1,5 @@
-config.yml
+.env
+.env.deployment
 README.md
 .idea
 internal
