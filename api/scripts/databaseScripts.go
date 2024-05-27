@@ -140,13 +140,16 @@ func CreateDatabaseIfNotExists(database string) {
 	db, err := sql.Open("mysql", connectionString)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error connecting to database: ", err)
 	}
 	defer db.Close()
 
 	_, err = db.Exec(fmt.Sprintf("Create database if not exists %s", database))
 	if err != nil {
-		log.Fatal(err)
+		if connectionString == ":@tcp(:)/" {
+			log.Println("Environment variables have not been set. See https://github.com/AustrianDataLAB/IndieGameStream/tree/develop/api")
+		}
+		log.Fatal("Error creating database: ", err)
 	}
 
 	return
