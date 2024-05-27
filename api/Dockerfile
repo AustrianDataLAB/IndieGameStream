@@ -18,8 +18,6 @@ CMD ["go", "test", "./tests"]
 
 #Stage 2b: Run Api
 FROM scratch as release
-#Copy config
-COPY config.deployment.yml ./config.yml
 #Copy migration scripts
 COPY migrations migrations
 #Copy build result to next stage
