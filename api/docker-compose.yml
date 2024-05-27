@@ -1,14 +1,10 @@
 #The docker-compose is for local deployment.
-#DON'T USE IT IN PRODUCTION IT CONTAINS HARDCODED PASSWORDS
 services:
   mysql:
+    env_file: .env.deployment
     image: 'mysql:8.4.0'
-    environment:
-      - MYSQL_ROOT_USER=root
-      - MYSQL_ROOT_PASSWORD=Root#123
-      - MYSQL_DATABASE=api
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT}:${MYSQL_PORT}"
     volumes:
       - ./internal/database:/bitnami/mysql/data
     networks:
@@ -24,9 +20,10 @@ services:
     #  - "--socket=/opt/bitnami/mysql/tmp/mysql.sock"
     #  - "--pid-file=/opt/bitnami/mysql/tmp/mysqld.pid"
   api:
+    env_file: .env.deployment
     build: .
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     restart: on-failure
     networks:
       - api
