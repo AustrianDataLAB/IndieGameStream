@@ -10,7 +10,7 @@ services:
     networks:
       - api
     healthcheck:
-      test: mysql --user=root --password=Root#123 -e 'SELECT * FROM mysql.time_zone'
+      test: mysqladmin ping --host=${MYSQL_HOST} --port=${MYSQL_PORT} --user=${MYSQL_ROOT_USER} --password=${MYSQL_ROOT_PASSWORD}
     restart: on-failure
     #command: # fix from https://github.com/bitnami/containers/issues/44854#issuecomment-1800945882
     #  - "/opt/bitnami/mysql/bin/mysqld"
