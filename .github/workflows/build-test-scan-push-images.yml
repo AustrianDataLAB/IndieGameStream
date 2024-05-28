@@ -136,12 +136,6 @@ jobs:
       - name: Login to Azure
         run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
 
-      - name: DC specific variables overwrite
-        run: |
-          echo "copying datacenter specific variables"
-          cp -v ${{ github.workspace }}/global_variables/*_variables.tf ${{ steps.set_workdir.outputs.workdir }}/.
-        continue-on-error: true
-
 
       - name: Terraform Apply
         run: |
@@ -150,9 +144,9 @@ jobs:
           export ARM_CLIENT_ID=${{ secrets.CLIENT_ID }}
           export TF_VAR_subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
           export TF_VAR_tenant_id=${{ secrets.AZURERM_TENANT_ID }}
-          export TF_VAR_tailscale_auth_key=$(secrets.TAILSCALE_AUTH_KEY)
-          export TF_VAR_tailscale_client_id=$(secrets.TAILSCALE_CLIENT_ID)
-          export TF_VAR_tailscale_client_secret=$(secrets.TAILSCALE_CLIENT_SECRET)
+          export TF_VAR_tailscale_auth_key=${{secrets.TAILSCALE_AUTH_KEY}}
+          export TF_VAR_tailscale_client_id=${{secrets.TAILSCALE_CLIENT_ID}}
+          export TF_VAR_tailscale_client_secret=${{secrets.TAILSCALE_CLIENT_SECRET}}
           export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
           terraform init
           terraform plan -out=tfplan.bin -input=false
