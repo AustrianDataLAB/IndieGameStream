@@ -7,6 +7,7 @@ on:
     
     tags:
       - v*.*.*
+      - feature/aks-ci
 
   pull_request:
     branches:
@@ -146,13 +147,6 @@ jobs:
           cp -v ${{ github.workspace }}/global_variables/*_variables.tf ${{ steps.set_workdir.outputs.workdir }}/.
         continue-on-error: true
 
-      - name: Tokenize terraform file
-        uses: qetza/replacetokens@v3
-        with:
-          root-directory: ${{ steps.set_workdir.outputs.workdir }}
-          target-files: '*.tf'
-          write-bom: false
-          action-on-missing: 'fail'
 
       - name: Terraform Apply
         run: |
