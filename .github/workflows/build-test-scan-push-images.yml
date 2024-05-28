@@ -139,7 +139,7 @@ jobs:
 
       - name: Terraform Apply
         run: |
-          cd ${{ github.workspace }}/iac"
+          cd ${{ github.workspace }}/iac
           export ARM_CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
           export ARM_CLIENT_ID=${{ secrets.CLIENT_ID }}
           export TF_VAR_subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
