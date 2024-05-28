@@ -1,5 +1,4 @@
 # Install
-
 Install helm and kind
 
 # How to run
