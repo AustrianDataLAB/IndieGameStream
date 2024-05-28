@@ -18,7 +18,7 @@ data "azurerm_resource_group" "rgruntime" {
 
  
 resource "azurerm_key_vault" "kvservice" {
-  name                        = "kv-service-not2day-2"
+  name                        = "kv-service-not2day-3"
   location                    = data.azurerm_resource_group.rgruntime.location
   resource_group_name         = data.azurerm_resource_group.rgruntime.name
   enabled_for_disk_encryption = true
