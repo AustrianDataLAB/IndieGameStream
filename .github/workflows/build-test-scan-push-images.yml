@@ -151,6 +151,7 @@ jobs:
           terraform init
           terraform plan -out=tfplan.bin -input=false
           terraform apply -auto-approve "tfplan.bin"
+          az aks command invoke -n testCluster -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TF_VAR_tailscale_client_id}} --set-string oauth.clientSecret=${{secrets.TF_VAR_tailscale_client_secret}} --set-string apiServerProxyConfig.mode=true --wait"
 
       - name: Logout of Azure
         run: az logout
