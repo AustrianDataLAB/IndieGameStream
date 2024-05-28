@@ -131,7 +131,7 @@ jobs:
           terraform_version: latest
 
       - name: Set WorkDir
-        run: echo "##[set-output name=workdir;]${{ github.workspace }}/bootstrap"
+        run: echo "##[set-output name=workdir;]${{ github.workspace }}/iac"
 
       - name: Login to Azure
         run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
