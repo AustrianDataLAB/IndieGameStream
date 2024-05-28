@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - add-operator-to-pipeline
 
   pull_request:
     branches:
@@ -26,6 +27,8 @@ jobs:
             directory: frontend
           - name: api
             directory: api
+          - name: operator
+            directory: operator
     runs-on: ubuntu-latest
     permissions:
       contents: write
