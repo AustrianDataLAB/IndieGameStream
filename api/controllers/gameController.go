@@ -79,7 +79,7 @@ func (g gameController) UploadGame(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	}
 
-	_, err = g.service.Save(file, title)
+	_, err = g.service.Save(file, title, c.GetString("subject"))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})

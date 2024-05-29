@@ -34,7 +34,7 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 	var games = []models.Game{}
 	for query.Next() {
 		var game models.Game
-		err = query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
+		err = query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,8 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 // FindByID finds a game with a specific id or nil if the game has not been found.
 func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 	var game models.Game
-	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url)
+	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).
+		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -86,12 +87,12 @@ func (g gameRepository) Save(game *models.Game) error {
 	}
 
 	//If not create a new one
-	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url) VALUES (?,?,?,?,?)")
+	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
 
-	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url))
+	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner))
 }
 
 // Delete removes the entry with a specific id from the games database.
