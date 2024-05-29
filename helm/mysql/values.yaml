@@ -1,0 +1,6 @@
+mysql:
+  auth:
+    database: api
+    existingSecret: mysql-secret # Find proper way of handling authentication in production
+  primary:
+    containerPorts: 3306

@@ -1,0 +1,5 @@
+mysql:
+  image:
+    debug: true
+  auth:
+    rootPassword: root

@@ -8,10 +8,3 @@ image:
   name: ghcr.io/austriandatalab/indiegamestream/api
   label: latest # Change to proper version tag
   pullPolicy: IfNotPresent
-
-mysql:
-  auth:
-    database: api
-    existingSecret: mysql-secret # Find proper way of handling authentication in production
-  primary:
-    containerPorts: 3306
