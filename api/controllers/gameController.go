@@ -100,11 +100,26 @@ func (g gameController) UploadGame(c *gin.Context) {
 func (g gameController) DeleteGameById(c *gin.Context) {
 	_uuid := getUUIDFromRequest(c)
 	if _uuid != uuid.Nil {
-		err := g.service.Delete(_uuid)
-		if err != nil { //TODO handle different errors
+
+		//Check if the user has access to the game
+		authorized, err := g.hasAccessToGame(c)
+
+		if err != nil {
 			if err == sql.ErrNoRows {
-				c.JSON(http.StatusNotFound, gin.H{"message": "Game not found"})
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Game not found"})
+				return
 			}
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		if !authorized {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "You don't have permission to access this resource"})
+			return
+		}
+
+		err = g.service.Delete(_uuid)
+		if err != nil { //TODO handle different errors
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		} else {
 			c.Status(http.StatusNoContent)
