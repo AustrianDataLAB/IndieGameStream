@@ -11,6 +11,7 @@ type IGameRepository interface {
 	FindByID(id uuid.UUID) (*models.Game, error)
 	Save(game *models.Game) error
 	Delete(id uuid.UUID) error
+	FindAllByOwner(owner string) ([]models.Game, error)
 }
 
 type gameRepository struct {
@@ -30,23 +31,18 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 		return nil, err
 	}
 	defer query.Close()
+	return readGamesFromRows(query)
+}
 
-	var games = []models.Game{}
-	for query.Next() {
-		var game models.Game
-		err = query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
-		if err != nil {
-			return nil, err
-		}
-		games = append(games, game)
-	}
-
-	err = query.Err()
+// FindAll returns all games of a specific owner from the database or (nil, err) if an error occurred.
+func (g gameRepository) FindAllByOwner(owner string) ([]models.Game, error) {
+	stmt, err := g.db.Prepare("SELECT * FROM games WHERE owner = ?")
+	query, err := stmt.Query(owner)
 	if err != nil {
 		return nil, err
 	}
-
-	return games, nil
+	defer query.Close()
+	return readGamesFromRows(query)
 }
 
 // FindByID finds a game with a specific id or nil if the game has not been found.
@@ -123,4 +119,23 @@ func checkAffectedRows(res sql.Result) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func readGamesFromRows(query *sql.Rows) ([]models.Game, error) {
+	var games = []models.Game{}
+	for query.Next() {
+		var game models.Game
+		err := query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
+		if err != nil {
+			return nil, err
+		}
+		games = append(games, game)
+	}
+
+	err := query.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return games, nil
 }
