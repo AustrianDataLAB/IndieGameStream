@@ -134,3 +134,14 @@ func getUUIDFromRequest(c *gin.Context) uuid.UUID {
 	}
 	return _uuid
 }
+
+// Returns true if the owner the user who is logged-in has the same subject-id as the game owner.
+// Returns false and error if any other error occurred.
+func (g gameController) hasAccessToGame(c *gin.Context) (bool, error) {
+	owner, err := g.service.ReadOwner(getUUIDFromRequest(c))
+	if err != nil {
+		return false, err
+	}
+
+	return owner == c.GetString("subject"), nil
+}
