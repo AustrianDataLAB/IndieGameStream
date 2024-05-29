@@ -25,7 +25,7 @@ type gameController struct {
 
 func (g gameController) GetAllGames(c *gin.Context) {
 	//Get Games
-	games, err := g.service.FindAll()
+	games, err := g.service.FindAllByOwner(c.GetString("subject"))
 	if err != nil { //TODO handle different errors
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
