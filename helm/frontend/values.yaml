@@ -1,10 +1,8 @@
 appName: frontend
-
 replicas: 1
+port: 80
 
 image:
   name: ghcr.io/austriandatalab/indiegamestream/frontend
-  label: latest
+  label: latest # Change to proper version tag
   pullPolicy: IfNotPresent
-
-port: 80
