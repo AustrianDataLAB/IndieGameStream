@@ -1,0 +1,12 @@
+image:
+  name: indiegamestream/api
+  label: latest
+  pullPolicy: Never
+
+ginMode: debug
+
+mysql:
+  image:
+    debug: true
+  auth:
+    rootPassword: root
