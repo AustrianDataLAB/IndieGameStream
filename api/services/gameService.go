@@ -14,10 +14,15 @@ type IGameService interface {
 	Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error)
 	Delete(id uuid.UUID) error
 	FindAllByOwner(owner string) ([]models.Game, error)
+	ReadOwner(id uuid.UUID) (string, error)
 }
 
 type gameService struct {
 	repository repositories.IGameRepository
+}
+
+func (g gameService) ReadOwner(id uuid.UUID) (string, error) {
+	return g.repository.ReadOwner(id)
 }
 
 func (g gameService) FindAll() ([]models.Game, error) {

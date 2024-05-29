@@ -12,6 +12,7 @@ type IGameRepository interface {
 	Save(game *models.Game) error
 	Delete(id uuid.UUID) error
 	FindAllByOwner(owner string) ([]models.Game, error)
+	ReadOwner(id uuid.UUID) (string, error)
 }
 
 type gameRepository struct {
@@ -22,6 +23,16 @@ func GameRepository(db *sql.DB) IGameRepository {
 	return &gameRepository{
 		db: db,
 	}
+}
+
+// Read the owner of a specific game or empty if the game has not been found
+func (g gameRepository) ReadOwner(id uuid.UUID) (string, error) {
+	var owner string
+	err := g.db.QueryRow("SELECT Owner FROM games WHERE ID = ?", id).Scan(&owner)
+	if err != nil {
+		return "", err
+	}
+	return owner, nil
 }
 
 // FindAll returns all games from the database or (nil, err) if an error occurred.
