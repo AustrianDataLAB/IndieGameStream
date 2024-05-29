@@ -55,7 +55,7 @@ func MigrateDatabase(db *sql.DB) {
 	//For each migration script
 	for _, fileName := range fileNames {
 		//Check if its a valid filename
-		match, err := regexp.MatchString(fileName, `\d*_.*[.]sql`)
+		match, err := regexp.MatchString(`\d*_.*[.]sql`, fileName)
 		if err != nil {
 			log.Fatal(err)
 		}
