@@ -1,4 +1,4 @@
 image:
-  name: frontend
+  name: indiegamestream/frontend
   label: latest
   pullPolicy: Never
