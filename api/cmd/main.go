@@ -24,12 +24,15 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	gamesService := services.GameService(gamesRepository)
 	gamesController := controllers.GameController(gamesService)
 
+	authService := services.AuthService()
+
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
 	//Upload a game
+<<<<<<< HEAD
 	r.POST("/games/", CorsHeader, gamesController.UploadGame)
 	//Get all uploaded games
 	r.GET("/games/", CorsHeader, gamesController.GetAllGames)
@@ -37,6 +40,15 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	r.GET("/games/:id", CorsHeader, gamesController.GetGameById)
 	//Delete a specific game, identified by its id
 	r.DELETE("/games/:id", CorsHeader, gamesController.DeleteGameById)
+=======
+	r.POST("/games/", authService.Authorize, gamesController.UploadGame)
+	//Get all uploaded games
+	r.GET("/games", authService.Authorize, gamesController.GetAllGames)
+	//Get a specific game by its id
+	r.GET("/games/:id", authService.Authorize, gamesController.GetGameById)
+	//Delete a specific game, identified by its id
+	r.DELETE("/games/:id", authService.Authorize, gamesController.DeleteGameById)
+>>>>>>> e186556 (authorize requests)
 
 	return r
 }
