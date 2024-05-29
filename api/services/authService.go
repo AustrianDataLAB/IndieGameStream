@@ -34,7 +34,7 @@ func (_ authService) Authorize(c *gin.Context) {
 
 	if err != nil {
 		log.Println(err.Error())
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "invalid token"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 		return
 	}
 	if payload == nil {
