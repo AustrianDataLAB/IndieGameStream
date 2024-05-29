@@ -8,6 +8,7 @@ import (
 	"github.com/dranikpg/dto-mapper"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"log"
 	"net/http"
 )
 
@@ -48,6 +49,13 @@ func (g gameController) GetGameById(c *gin.Context) {
 		game, err := g.service.FindByID(_uuid)
 		if err != nil { //TODO handle different errors
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+		if game.Owner != c.GetString("subject") {
+			log.Print(fmt.Printf("%s tried to access an resource of %s", c.GetString("subject"), game.Owner))
+			c.AbortWithStatusJSON(
+				http.StatusForbidden,
+				gin.H{"message": "You don't have permission to access this resource"})
 			return
 		}
 		if game == nil {
