@@ -13,6 +13,7 @@ type IGameService interface {
 	FindByID(id uuid.UUID) (*models.Game, error)
 	Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error)
 	Delete(id uuid.UUID) error
+	FindAllByOwner(owner string) ([]models.Game, error)
 }
 
 type gameService struct {
@@ -21,6 +22,10 @@ type gameService struct {
 
 func (g gameService) FindAll() ([]models.Game, error) {
 	return g.repository.FindAll()
+}
+
+func (g gameService) FindAllByOwner(owner string) ([]models.Game, error) {
+	return g.repository.FindAllByOwner(owner)
 }
 
 func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) { return g.repository.FindByID(id) }
