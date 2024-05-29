@@ -25,6 +25,8 @@ OPERATOR_IMAGE=$(IMAGE_NAMESPACE)/$(API_NAME)
 OPERATOR_DIRECTORY=operator
 OPERATOR_DOCKERFILE=operator/Dockerfile
 
+MYSQL_NAME=mysql
+
 HELM_DIRECTORY=helm
 HELM_FRONTEND=frontend
 HELM_API=api
@@ -84,8 +86,9 @@ install_frontend:
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
 
 install_mysql:
-	helm install mysql oci://registry-1.docker.io/bitnamicharts/mysql --version "11.1.0" --wait \
-		--create-namespace --namespace=api
+	helm install $(MYSQL_NAME) oci://registry-1.docker.io/bitnamicharts/mysql --version "11.1.0" --wait \
+		--create-namespace --namespace=mysql -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values.yaml \
+		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values-dev.yaml
 
 install_api:
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)/values-dev.yaml \
@@ -105,16 +108,16 @@ uninstall_operator:
 	helm uninstall $(OPERATOR_NAME) --wait
 
 uninstall_mysql:
-	helm uninstall mysql
+	helm uninstall $(MYSQL_NAME) --wait
 
 delete_frontend:
-	docker rmi $(FRONTEND_IMAGE)
+	- docker rmi $(FRONTEND_IMAGE)
 
 delete_api:
-	docker rmi $(API_IMAGE)
+	- docker rmi $(API_IMAGE)
 
 delete_operator:
-	docker rmi $(OPERATOR_IMAGE)
+	- docker rmi $(OPERATOR_IMAGE)
 
 redeploy_frontend: uninstall_frontend build_frontend load_frontend install_frontend
 

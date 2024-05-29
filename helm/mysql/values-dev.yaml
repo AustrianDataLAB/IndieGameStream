@@ -3,3 +3,4 @@ mysql:
     debug: true
   auth:
     rootPassword: root
+    existingSecret: ""
