@@ -11,4 +11,5 @@ type Game struct {
 	StorageLocation string            `json:"storageLocation"`
 	Status          shared.GameStatus `json:"status"`
 	Url             string            `json:"url"`
+	Owner           string            `json:"owner"`
 }
