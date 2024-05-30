@@ -30,13 +30,13 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	})
 
 	//Upload a game
-	r.POST("/games/", gamesController.UploadGame)
+	r.POST("/games/", CorsHeader, gamesController.UploadGame)
 	//Get all uploaded games
-	r.GET("/games", gamesController.GetAllGames)
+	r.GET("/games/", CorsHeader, gamesController.GetAllGames)
 	//Get a specific game by its id
-	r.GET("/games/:id", gamesController.GetGameById)
+	r.GET("/games/:id", CorsHeader, gamesController.GetGameById)
 	//Delete a specific game, identified by its id
-	r.DELETE("/games/:id", gamesController.DeleteGameById)
+	r.DELETE("/games/:id", CorsHeader, gamesController.DeleteGameById)
 
 	return r
 }
@@ -84,4 +84,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func CorsHeader(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", c.Request.Header.Get("Origin"))
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(204)
+		return
+	}
+
+	c.Next()
 }
