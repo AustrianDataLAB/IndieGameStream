@@ -82,7 +82,8 @@ load_operator:
 	kind load docker-image $(OPERATOR_IMAGE) --name $(CLUSTER_NAME)
 
 install_frontend:
-	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
+	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values.yaml \
+		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
 
 install_mysql:
@@ -91,11 +92,13 @@ install_mysql:
 		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values-dev.yaml
 
 install_api:
-	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)/values-dev.yaml \
+	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)/values.yaml \
+		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)/values-dev.yaml \
 		$(API_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)
 
 install_operator:
-	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)/values-dev.yaml \
+	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)/values.yaml \
+		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)/values-dev.yaml \
 		$(OPERATOR_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)
 
 uninstall_frontend:

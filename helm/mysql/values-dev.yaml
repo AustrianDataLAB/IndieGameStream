@@ -1,6 +1,4 @@
-mysql:
-  image:
-    debug: true
-  auth:
-    rootPassword: root
-    existingSecret: ""
+image:
+  debug: true
+auth:
+  rootPassword: root
