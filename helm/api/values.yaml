@@ -2,9 +2,15 @@ appName: api
 replicas: 1
 port: 8080
 
-ginMode: release
-
 image:
   name: ghcr.io/austriandatalab/indiegamestream/api
   label: latest # Change to proper version tag
   pullPolicy: IfNotPresent
+
+env:
+  ginMode: release
+  mysqlDatabase: api
+  mysqlRootUser: root
+  mysqlRootPassword: root
+  mysqlHost: mysql.mysql.svc.cluster.local
+  mysqlPort: 3306
