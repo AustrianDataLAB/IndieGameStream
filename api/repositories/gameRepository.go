@@ -48,6 +48,9 @@ func (g gameRepository) FindAll() ([]models.Game, error) {
 // FindAll returns all games of a specific owner from the database or (nil, err) if an error occurred.
 func (g gameRepository) FindAllByOwner(owner string) ([]models.Game, error) {
 	stmt, err := g.db.Prepare("SELECT * FROM games WHERE owner = ?")
+	if err != nil {
+		return nil, err
+	}
 	query, err := stmt.Query(owner)
 	if err != nil {
 		return nil, err
