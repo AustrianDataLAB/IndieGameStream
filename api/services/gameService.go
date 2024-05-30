@@ -9,7 +9,6 @@ import (
 )
 
 type IGameService interface {
-	FindAll() ([]models.Game, error)
 	FindByID(id uuid.UUID) (*models.Game, error)
 	Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error)
 	Delete(id uuid.UUID) error
@@ -25,10 +24,6 @@ func (g gameService) ReadOwner(id uuid.UUID) (string, error) {
 	return g.repository.ReadOwner(id)
 }
 
-func (g gameService) FindAll() ([]models.Game, error) {
-	return g.repository.FindAll()
-}
-
 func (g gameService) FindAllByOwner(owner string) ([]models.Game, error) {
 	return g.repository.FindAllByOwner(owner)
 }
@@ -36,6 +31,7 @@ func (g gameService) FindAllByOwner(owner string) ([]models.Game, error) {
 func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) { return g.repository.FindByID(id) }
 
 func (g gameService) Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error) {
+
 	//TODO save file
 
 	game := models.Game{

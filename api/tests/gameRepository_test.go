@@ -180,7 +180,7 @@ func Test_Save_Existing_Game_Should_Succeed(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"id", "title", "storage_location", "status", "url", "owner"}).
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
 			AddRow(id, "", "", "", "", ""),
 	)
 
@@ -233,7 +233,7 @@ func Test_Find_Game_By_Id_Should_Succeed(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"id", "title", "storage_location", "status", "url", "owner"}).
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
 			AddRow(id, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
 	)
 
@@ -281,7 +281,7 @@ func Test_Find_Game_By_Id_Should_Return_Nil(t *testing.T) {
 	}
 }
 
-func Test_Find_Two_Games_Should_Succeed(t *testing.T) {
+func Test_Find_Two_Games_Of_Same_Owner_Should_Succeed(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -294,7 +294,7 @@ func Test_Find_Two_Games_Should_Succeed(t *testing.T) {
 		StorageLocation: "AMockB",
 		Status:          "AMockC",
 		Url:             "AMockD",
-		Owner:           "AMockE",
+		Owner:           "MockOwner",
 	}
 
 	gameB := models.Game{
@@ -303,12 +303,14 @@ func Test_Find_Two_Games_Should_Succeed(t *testing.T) {
 		StorageLocation: "BMockB",
 		Status:          "BMockC",
 		Url:             "BMockD",
-		Owner:           "BMockE",
+		Owner:           "MockOwner",
 	}
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games")).
+	mock.ExpectPrepare(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?"))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
+		WithArgs("MockOwner").
 		WillReturnRows(
-			sqlmock.NewRows([]string{"id", "title", "storage_location", "status", "url", "owner"}).
+			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner"}).
 				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner).
 				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner),
 		)
@@ -316,7 +318,7 @@ func Test_Find_Two_Games_Should_Succeed(t *testing.T) {
 	//Run the test
 	repository := repositories.GameRepository(db)
 
-	res, err := repository.FindAll()
+	res, err := repository.FindAllByOwner("MockOwner")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -344,15 +346,17 @@ func Test_Find_Games_When_Database_Is_Empty_Should_Succeed(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games")).
+	mock.ExpectPrepare(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?"))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
+		WithArgs("MockOwner").
 		WillReturnRows(
-			sqlmock.NewRows([]string{"id", "title", "storage_location", "status", "url", "owner"}),
+			sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}),
 		)
 
 	//Run the test
 	repository := repositories.GameRepository(db)
 
-	res, err := repository.FindAll()
+	res, err := repository.FindAllByOwner("MockOwner")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -389,7 +393,7 @@ func Test_Read_Owner_Should_Succeed(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT Owner FROM games WHERE ID = ?")).
 		WithArgs(id).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "storage_location", "status", "url", "owner"}))
+		WillReturnRows(sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}))
 
 	//Run the test
 	repository := repositories.GameRepository(db)
