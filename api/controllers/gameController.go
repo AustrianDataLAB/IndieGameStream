@@ -27,7 +27,7 @@ func (g gameController) GetAllGames(c *gin.Context) {
 	//Get Games
 	games, err := g.service.FindAllByOwner(c.GetString("subject"))
 	if err != nil { //TODO handle different errors
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -35,11 +35,12 @@ func (g gameController) GetAllGames(c *gin.Context) {
 	resultDto := []dtos.GetGameByIdResponseBody{}
 	err = dto.Map(&resultDto, games)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
 	c.IndentedJSON(http.StatusOK, resultDto)
+	return
 }
 
 func (g gameController) GetGameById(c *gin.Context) {
@@ -48,7 +49,7 @@ func (g gameController) GetGameById(c *gin.Context) {
 		//Get game by uuid
 		game, err := g.service.FindByID(_uuid)
 		if err != nil { //TODO handle different errors
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 		if game.Owner != c.GetString("subject") {
@@ -59,7 +60,7 @@ func (g gameController) GetGameById(c *gin.Context) {
 			return
 		}
 		if game == nil {
-			c.JSON(http.StatusNotFound, gin.H{"message": "Game not found"})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Game not found"})
 			return
 		}
 
@@ -67,7 +68,7 @@ func (g gameController) GetGameById(c *gin.Context) {
 		resultDto := dtos.GetGameByIdResponseBody{}
 		err = dto.Map(&resultDto, game)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
@@ -79,22 +80,25 @@ func (g gameController) UploadGame(c *gin.Context) {
 
 	title := c.Query("title")
 	if len(title) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Title is required"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Title is required"})#
+		return
 	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
 	}
 
 	_, err = g.service.Save(file, title, c.GetString("subject"))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
 
 	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, file.Filename))
-	c.String(http.StatusCreated, "")
+	c.AbortWithStatus(http.StatusCreated)
 }
 
 func (g gameController) DeleteGameById(c *gin.Context) {
@@ -120,14 +124,11 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 
 		err = g.service.Delete(_uuid)
 		if err != nil { //TODO handle different errors
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		} else {
-			c.Status(http.StatusNoContent)
+			c.AbortWithStatus(http.StatusNoContent)
 		}
 	}
-
-	//TODO Implement delete game
-	c.String(http.StatusNoContent, "")
 }
 
 func GameController(service services.IGameService) IGameController {
@@ -141,10 +142,10 @@ func GameController(service services.IGameService) IGameController {
 func getUUIDFromRequest(c *gin.Context) uuid.UUID {
 	_uuid, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid game ID"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Invalid game ID"})
 		return uuid.Nil
 	} else if _uuid == uuid.Nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid game ID"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Invalid game ID"})
 		return uuid.Nil
 	}
 	return _uuid
