@@ -73,6 +73,7 @@ func (g gameController) GetGameById(c *gin.Context) {
 		}
 
 		c.IndentedJSON(http.StatusOK, resultDto)
+		return
 	}
 }
 
@@ -80,7 +81,7 @@ func (g gameController) UploadGame(c *gin.Context) {
 
 	title := c.Query("title")
 	if len(title) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Title is required"})#
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Title is required"})
 		return
 	}
 
@@ -99,6 +100,7 @@ func (g gameController) UploadGame(c *gin.Context) {
 
 	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, file.Filename))
 	c.AbortWithStatus(http.StatusCreated)
+	return
 }
 
 func (g gameController) DeleteGameById(c *gin.Context) {
@@ -125,8 +127,10 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 		err = g.service.Delete(_uuid)
 		if err != nil { //TODO handle different errors
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
 		} else {
 			c.AbortWithStatus(http.StatusNoContent)
+			return
 		}
 	}
 }
