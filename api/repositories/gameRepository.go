@@ -7,7 +7,6 @@ import (
 )
 
 type IGameRepository interface {
-	FindAll() ([]models.Game, error)
 	FindByID(id uuid.UUID) (*models.Game, error)
 	Save(game *models.Game) error
 	Delete(id uuid.UUID) error
@@ -33,16 +32,6 @@ func (g gameRepository) ReadOwner(id uuid.UUID) (string, error) {
 		return "", err
 	}
 	return owner, nil
-}
-
-// FindAll returns all games from the database or (nil, err) if an error occurred.
-func (g gameRepository) FindAll() ([]models.Game, error) {
-	query, err := g.db.Query("SELECT * FROM games")
-	if err != nil {
-		return nil, err
-	}
-	defer query.Close()
-	return readGamesFromRows(query)
 }
 
 // FindAll returns all games of a specific owner from the database or (nil, err) if an error occurred.
