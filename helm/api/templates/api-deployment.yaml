@@ -22,5 +22,17 @@ spec:
         ports:
         - containerPort: {{ .Values.port }}
         env:
+        - name: PORT
+          value: {{ .Values.port | quote }}
         - name: GIN_MODE
-          value: {{ .Values.ginMode }}
+          value: {{ .Values.env.ginMode | quote }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.env.mysqlDatabase | quote }}
+        - name: MYSQL_ROOT_USER
+          value: {{ .Values.env.mysqlRootUser | quote }}
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.env.mysqlRootPassword | quote }}
+        - name: MYSQL_HOST
+          value: {{ .Values.env.mysqlHost | quote }}
+        - name: MYSQL_PORT
+          value: {{ .Values.env.mysqlPort | quote }}
