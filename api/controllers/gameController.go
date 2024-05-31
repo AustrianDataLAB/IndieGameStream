@@ -91,7 +91,13 @@ func (g gameController) UploadGame(c *gin.Context) {
 		return
 	}
 
-	_, err = g.service.Save(file, title, c.GetString("subject"))
+	sub := c.GetString("subject")
+	if len(sub) == 0 {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "IdToken is invalid, sub is missing"})
+		return
+	}
+
+	_, err = g.service.Save(file, title, sub)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
