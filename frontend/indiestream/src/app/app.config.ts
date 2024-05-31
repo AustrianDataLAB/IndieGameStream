@@ -1,10 +1,13 @@
-import {APP_INITIALIZER, ApplicationConfig, importProvidersFrom} from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { provideRouter, Router } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideHttpClient } from "@angular/common/http";
+import { HTTP_INTERCEPTORS, provideHttpClient } from "@angular/common/http";
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import {provideAnimations} from "@angular/platform-browser/animations";
+import { provideAnimations } from "@angular/platform-browser/animations";
+import { provideOAuthClient } from "angular-oauth2-oidc";
+import { AuthInitializer } from "./services/auth.initializer";
+import { AuthInterceptor} from "./services/authInterceptor.service";
 import { AppConfigService } from './services/app-config.service';
 
 export function initConfig(appConfig: AppConfigService) {
@@ -13,15 +16,19 @@ export function initConfig(appConfig: AppConfigService) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes), 
-    provideHttpClient(), 
-    provideAnimationsAsync(), 
+    provideRouter(routes),
+    provideHttpClient(),
+    provideAnimationsAsync(),
     provideAnimations(),
+    provideOAuthClient(),
+    { provide: APP_INITIALIZER,
+      useFactory: (authInitializer: AuthInitializer) => () =>
+        authInitializer.initializeApp(),
+      deps: [AuthInitializer],
+      multi: true, },
     {
-      provide: APP_INITIALIZER,
-      useFactory: initConfig,
-      deps: [AppConfigService],
-      multi: true
-    }
-  ]
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },]
 };

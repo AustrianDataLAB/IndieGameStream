@@ -1,19 +1,25 @@
 import { Injectable } from "@angular/core";
-import {HttpClient, HttpEvent} from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHeaders } from '@angular/common/http';
 import { Games, Game } from '../modules/games';
 import { Observable } from "rxjs";
 import { AppConfigService } from "./app-config.service";
+import { AuthService} from "./auth.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class GamesService {
   private apiUrl = this.configService.getConfig().apiUrl;
-  constructor(private http: HttpClient, private configService: AppConfigService) {
+  constructor(private http: HttpClient, , private authService: AuthService, private configService: AppConfigService) {
     console.log(this.configService.getConfig())
   }
 
   getGames(): Observable<Games> {
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+      }),
+    };
     return this.http.get<Games>(this.apiUrl + "/games/");
   }
 
