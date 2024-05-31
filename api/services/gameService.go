@@ -4,8 +4,15 @@ import (
 	"api/models"
 	"api/repositories"
 	"api/shared"
+	"context"
+	"fmt"
 	"github.com/google/uuid"
+	"log"
 	"mime/multipart"
+	"os"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
 type IGameService interface {
@@ -34,6 +41,29 @@ func (g gameService) Save(file *multipart.FileHeader, title string) (*models.Gam
 		StorageLocation: "",
 		Status:          shared.Status_New,
 		Url:             "",
+	}
+
+	// TODO replace stamango
+	url := "https://stamango.blob.core.windows.net/"
+
+	//clientID := os.Getenv("AZURE_CLIENT_ID")
+	//opts := &azidentity.ManagedIdentityCredentialOptions{ID: azidentity.ClientID(clientID)}
+	//credential, err := azidentity.NewManagedIdentityCredential(opts)
+	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Println(fmt.Sprintf("------------------------- err1: %s", err))
+		return nil, err
+	}
+
+	client, err := azblob.NewClient(url, credential, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	containerName := "indiegamestream"
+	_, err = client.CreateContainer(context.Background(), containerName, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return &game, g.repository.Save(&game)
