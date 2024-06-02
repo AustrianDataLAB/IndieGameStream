@@ -1,0 +1,90 @@
+name: Deploy to azure
+
+on: 
+  workflow_dispatch:
+    inputs:
+      purge:
+        description: 'Delete az infrastructure'
+        required: false
+        default: false
+        type: boolean
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: austriandatalab
+  SUB_NAMESPACE: indiegamestream
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ ! github.event.inputs.purge }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+
+      - name: Terraform Apply
+        working-directory: ./iac
+        run: |
+          export ARM_CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
+          export ARM_CLIENT_ID=${{ secrets.CLIENT_ID }}
+          export TF_VAR_subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
+          export TF_VAR_tenant_id=${{ secrets.AZURERM_TENANT_ID }}
+          export TF_VAR_tailscale_auth_key=${{secrets.TAILSCALE_AUTH_KEY}}
+          export TF_VAR_tailscale_client_id=${{secrets.TAILSCALE_CLIENT_ID}}
+          export TF_VAR_tailscale_client_secret=${{secrets.TAILSCALE_CLIENT_SECRET}}
+          export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
+          terraform init
+          terraform plan -out=tfplan.bin -input=false
+          terraform apply -auto-approve "tfplan.bin"
+          az aks command invoke -n testCluster -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TF_VAR_tailscale_client_id}} --set-string oauth.clientSecret=${{secrets.TF_VAR_tailscale_client_secret}} --set-string apiServerProxyConfig.mode=true --wait"
+
+      - name: Logout of Azure
+        run: az logout
+  purge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.purge }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+
+      - name: Terraform Apply
+        working-directory: ./iac
+        run: |
+          export ARM_CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
+          export ARM_CLIENT_ID=${{ secrets.CLIENT_ID }}
+          export TF_VAR_subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
+          export TF_VAR_tenant_id=${{ secrets.AZURERM_TENANT_ID }}
+          export TF_VAR_tailscale_auth_key=${{secrets.TAILSCALE_AUTH_KEY}}
+          export TF_VAR_tailscale_client_id=${{secrets.TAILSCALE_CLIENT_ID}}
+          export TF_VAR_tailscale_client_secret=${{secrets.TAILSCALE_CLIENT_SECRET}}
+          export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
+          terraform init
+          terraform plan -out=tfplan.bin -input=false
+          terraform apply -auto-approve "tfplan.bin" -destroy
+          terraform apply -auto-approve "tfplan.bin" -destroy
+          terraform apply -auto-approve "tfplan.bin" -destroy
+
+      - name: Logout of Azure
+        run: az logout
