@@ -32,23 +32,13 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	})
 
 	//Upload a game
-<<<<<<< HEAD
-	r.POST("/games/", CorsHeader, gamesController.UploadGame)
+	r.POST("/games/", CorsHeader, authService.Authorize, gamesController.UploadGame)
 	//Get all uploaded games
-	r.GET("/games/", CorsHeader, gamesController.GetAllGames)
+	r.GET("/games", CorsHeader, authService.Authorize, gamesController.GetAllGames)
 	//Get a specific game by its id
-	r.GET("/games/:id", CorsHeader, gamesController.GetGameById)
+	r.GET("/games/:id", CorsHeader, authService.Authorize, gamesController.GetGameById)
 	//Delete a specific game, identified by its id
-	r.DELETE("/games/:id", CorsHeader, gamesController.DeleteGameById)
-=======
-	r.POST("/games/", authService.Authorize, gamesController.UploadGame)
-	//Get all uploaded games
-	r.GET("/games", authService.Authorize, gamesController.GetAllGames)
-	//Get a specific game by its id
-	r.GET("/games/:id", authService.Authorize, gamesController.GetGameById)
-	//Delete a specific game, identified by its id
-	r.DELETE("/games/:id", authService.Authorize, gamesController.DeleteGameById)
->>>>>>> e186556 (authorize requests)
+	r.DELETE("/games/:id", CorsHeader, authService.Authorize, gamesController.DeleteGameById)
 
 	return r
 }
