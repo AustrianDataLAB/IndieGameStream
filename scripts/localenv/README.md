@@ -1,4 +1,5 @@
 # Prerequisites
+- Debian-based system
 - docker
 - kubectl
 - kind
