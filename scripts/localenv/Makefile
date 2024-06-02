@@ -39,10 +39,10 @@ HELM_STUNNER=stunner
 .PHONY: *
 
 # Creates a single-node cluster and installs all components on it
-all: build_images create_cluster load_images add_metallb install output
+all: build_images create_cluster load_images add_metallb install help
 
 # Creates a cluster with three nodes and installs all components on it
-multi_node: build_images create_multinode_cluster load_images add_metallb install output
+multi_node: build_images create_multinode_cluster load_images add_metallb install help
 
 # Removes the cluster and all local images
 destroy: teardown_cluster delete_images
@@ -156,13 +156,15 @@ redeploy_api: uninstall_api build_api load_api install_api redeploy_frontend
 
 redeploy_operator: uninstall_operator build_operator load_operator install_operator
 
-output:
+help:
 	$(info $(HEADER))
 	@echo "----------------------------------------------------------------------"
 	@echo "Type 'make destroy' to delete the cluster and locally build images"
 	@echo "Type 'make teardown_cluster' to only delete the cluster"
 	@echo "Type 'make redeploy_api/frontend/operator' to rebuild and redeploy the given component to the cluster"
+	@echo "Type 'make help' to get this information"
 	@echo "Other useful targets can be found in the Makefile"
 	@echo "----------------------------------------------------------------------"
 	@echo "The frontend is reachable under http://$$(kubectl get svc frontend -n frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 	@echo "The API is reachable under http://$$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):8080"
+	@echo "----------------------------------------------------------------------"
