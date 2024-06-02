@@ -4,7 +4,7 @@ port: 8080
 
 image:
   name: ghcr.io/austriandatalab/indiegamestream/api
-  label: latest # Change to proper version tag
+  label: v1.0.0 # Change to proper version tag
   pullPolicy: IfNotPresent
 
 env:
