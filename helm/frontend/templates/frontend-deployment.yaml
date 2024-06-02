@@ -22,11 +22,13 @@ spec:
         ports:
         - containerPort: {{ .Values.port }}
         volumeMounts:
-        - name: "{{ .Values.appName }}-config"
-          mountPath: "{{ .Values.webRootDirectory }}/assets/app.config.json"
-          subPath: app.config.json
+        - name: "{{ .Values.appName }}-config-volume"
+          mountPath: "{{ .Values.webRootDirectory }}/assets"
           readOnly: true
       volumes: 
-      - name: "{{ .Values.appName }}-config"
+      - name: "{{ .Values.appName }}-config-volume"
         configMap:
           name: "{{ .Values.appName }}-config"
+          items:
+          - key: app.config.json
+            path: app.config.json
