@@ -97,14 +97,14 @@ func (g gameController) UploadGame(c *gin.Context) {
 		return
 	}
 
-	_, err = g.service.Save(file, title, sub)
+	game, err := g.service.Save(file, title, sub)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, file.Filename))
+	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, game.ID.String()))
 	c.AbortWithStatus(http.StatusCreated)
 	return
 }
