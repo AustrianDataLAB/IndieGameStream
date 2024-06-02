@@ -87,7 +87,7 @@ load_operator:
 install_frontend:
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values.yaml \
 		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
-		--set-string appConfig.apiUrl $(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
+		--set-string appConfig.apiUrl $$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
 
 install_mysql:
@@ -146,6 +146,10 @@ redeploy_operator: uninstall_operator build_operator load_operator install_opera
 
 output:
 	$(info $(HEADER))
+	@echo "----------------------------------------------------------------------"
 	@echo "Type 'make destroy' to delete the cluster and locally build images"
 	@echo "Type 'make teardown_cluster' to only delete the cluster"
 	@echo "Type 'make redeploy_api/frontend/operator' to rebuild and redeploy the given component to the cluster"
+	@echo "----------------------------------------------------------------------"
+	@echo "The frontend is reachable under http://$$(kubectl get svc frontend -n frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+	@echo "The API is reachable under http://$$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
