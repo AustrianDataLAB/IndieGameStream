@@ -142,7 +142,7 @@ delete_operator:
 
 redeploy_frontend: uninstall_frontend build_frontend load_frontend install_frontend
 
-redeploy_api: uninstall_api build_api load_api install_api
+redeploy_api: uninstall_api build_api load_api install_api redeploy_frontend
 
 redeploy_operator: uninstall_operator build_operator load_operator install_operator
 
