@@ -11,6 +11,5 @@ env:
   ginMode: release
   mysqlDatabase: api
   mysqlRootUser: root
-  mysqlRootPassword: root
   mysqlHost: mysql.mysql.svc.cluster.local
   mysqlPort: 3306

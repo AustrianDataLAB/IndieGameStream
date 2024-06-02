@@ -1,7 +1,0 @@
-auth:
-  database: api
-primary:
-  startupProbe:
-    enabled: false
-  containerPorts:
-    mysql: 3306

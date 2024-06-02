@@ -1,4 +1,8 @@
-image:
-  debug: true
-auth:
-  rootPassword: root
+credentials:
+  root:
+    password: root
+
+serverInstances: 1
+
+tls:
+  useSelfSigned: true
