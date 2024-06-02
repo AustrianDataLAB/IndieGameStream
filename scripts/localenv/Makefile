@@ -152,4 +152,4 @@ output:
 	@echo "Type 'make redeploy_api/frontend/operator' to rebuild and redeploy the given component to the cluster"
 	@echo "----------------------------------------------------------------------"
 	@echo "The frontend is reachable under http://$$(kubectl get svc frontend -n frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-	@echo "The API is reachable under http://$$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+	@echo "The API is reachable under http://$$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):8080"
