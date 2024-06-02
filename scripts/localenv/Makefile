@@ -85,10 +85,12 @@ load_operator:
 	kind load docker-image $(OPERATOR_IMAGE) --name $(CLUSTER_NAME)
 
 install_frontend:
+	set -e ;\
+	API_IP=$$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}') ;\
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values.yaml \
 		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
-		--set-string appConfig.apiUrl $$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
-		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
+		--set-string appConfig.apiUrl=$$API_IP \
+		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND) ;\
 
 install_mysql:
 	helm repo add mysql-operator https://mysql.github.io/mysql-operator/
