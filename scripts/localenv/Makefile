@@ -66,13 +66,13 @@ teardown_cluster:
 	kind delete cluster --name $(CLUSTER_NAME)
 
 build_frontend:  
-	docker build $(ROOT_DIRECTORY)/$(FRONTEND_DIRECTORY)  -t $(FRONTEND_IMAGE) -f $(ROOT_DIRECTORY)/$(FRONTEND_DOCKERFILE)
+	docker build $(ROOT_DIRECTORY)/$(FRONTEND_DIRECTORY)  -t $(FRONTEND_IMAGE):latest -f $(ROOT_DIRECTORY)/$(FRONTEND_DOCKERFILE)
 
 build_api:
-	docker build $(ROOT_DIRECTORY)/$(API_DIRECTORY) -t $(API_IMAGE) -f $(ROOT_DIRECTORY)/$(API_DOCKERFILE)
+	docker build $(ROOT_DIRECTORY)/$(API_DIRECTORY) -t $(API_IMAGE):latest -f $(ROOT_DIRECTORY)/$(API_DOCKERFILE)
 
 build_operator:
-	docker build $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) -t $(OPERATOR_IMAGE) -f $(ROOT_DIRECTORY)/$(OPERATOR_DOCKERFILE)
+	docker build $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) -t $(OPERATOR_IMAGE):latest -f $(ROOT_DIRECTORY)/$(OPERATOR_DOCKERFILE)
 
 load_frontend:
 	kind load docker-image $(FRONTEND_IMAGE) --name $(CLUSTER_NAME)
@@ -104,7 +104,7 @@ install_api:
 		$(API_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)
 
 install_operator:
-	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) deploy IMG=$(OPERATOR_IMAGE)
+	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) deploy IMG=$(OPERATOR_IMAGE):latest
 
 install_stunner:
 	helm dependency build $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_STUNNER) --skip-refresh
