@@ -21,3 +21,12 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.port }}
+        volumeMounts:
+        - name: "{{ .Values.appName }}-config"
+          mountPath: "{{ .Values.webRootDirectory }}/assets/app.config.json"
+          subPath: app.config.json
+          readOnly: true
+      volumes: 
+      - name: "{{ .Values.appName }}-config"
+        configMap:
+          name: "{{ .Values.appName }}-config"
