@@ -1,6 +1,8 @@
-ginMode: debug
-
 image:
   name: indiegamestream/api
   label: latest
   pullPolicy: Never
+
+env:
+  ginMode: debug
+  mysqlRootPassword: root

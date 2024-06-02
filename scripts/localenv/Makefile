@@ -87,8 +87,13 @@ install_frontend:
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
 
 install_mysql:
-	helm install $(MYSQL_NAME) oci://registry-1.docker.io/bitnamicharts/mysql --version "11.1.0" --wait \
-		--create-namespace --namespace=mysql -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values.yaml \
+	helm repo add mysql-operator https://mysql.github.io/mysql-operator/
+	helm repo update
+	helm install $(MYSQL_NAME)-operator mysql-operator/mysql-operator --version "2.1.3" --wait \
+		--create-namespace --namespace=$(MYSQL_NAME)-operator
+	helm install $(MYSQL_NAME) mysql-operator/mysql-innodbcluster --version "2.1.3" --wait \
+        --create-namespace --namespace=$(MYSQL_NAME) \
+		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values.yaml \
 		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_MYSQL)/values-dev.yaml
 
 install_api:
@@ -111,7 +116,8 @@ uninstall_operator:
 	helm uninstall $(OPERATOR_NAME) --wait
 
 uninstall_mysql:
-	helm uninstall $(MYSQL_NAME) --wait
+	helm uninstall $(MYSQL_NAME) -n $(MYSQL_NAME)-cluster --wait
+	helm uninstall $(MYSQL_NAME)-operator -n $(MYSQL_NAME)-operator --wait
 
 delete_frontend:
 	- docker rmi $(FRONTEND_IMAGE)
