@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS db_state (
-    migrations int
+    migrations int NOT NULL primary key
 );
 
 CREATE TABLE IF NOT EXISTS games (
