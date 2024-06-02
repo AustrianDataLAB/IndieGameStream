@@ -7,7 +7,7 @@ image:
   label: v1.0.0 # Change to proper version tag
   pullPolicy: IfNotPresent
 
-webRootDirecotry: /usr/share/nginx/html
+webRootDirectory: /usr/share/nginx/html
 
 appConfig:
   production: true
