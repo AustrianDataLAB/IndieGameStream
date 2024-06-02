@@ -26,12 +26,14 @@ OPERATOR_DIRECTORY=operator
 OPERATOR_DOCKERFILE=operator/Dockerfile
 
 MYSQL_NAME=mysql
+STUNNER_NAME=stunner
 
 HELM_DIRECTORY=helm
 HELM_FRONTEND=frontend
 HELM_API=api
 HELM_OPERATOR=operator
 HELM_MYSQL=mysql
+HELM_STUNNER=stunner
 
 .PHONY: *
 
@@ -47,9 +49,9 @@ load_images: load_frontend load_api load_operator
 
 delete_images: delete_frontend delete_api delete_operator
 
-install: install_frontend install_mysql install_api install_operator
+install: install_frontend install_mysql install_api install_stunner install_operator
 
-uninstall: uninstall_frontend uninstall_api uninstall_mysql uninstall_operator
+uninstall: uninstall_frontend uninstall_api uninstall_mysql uninstall_stunner uninstall_operator
 
 create_cluster:
 	kind create cluster --name $(CLUSTER_NAME)
@@ -102,9 +104,12 @@ install_api:
 		$(API_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_API)
 
 install_operator:
-	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)/values.yaml \
-		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)/values-dev.yaml \
-		$(OPERATOR_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_OPERATOR)
+	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) deploy IMG=$(OPERATOR_IMAGE)
+
+install_stunner:
+	helm dependency build $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_STUNNER) --skip-refresh
+	helm install $(STUNNER_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_STUNNER) \
+		--create-namespace --namespace=$(STUNNER_NAME)
 
 uninstall_frontend:
 	helm uninstall $(FRONTEND_NAME) --wait
@@ -113,11 +118,14 @@ uninstall_api:
 	helm uninstall $(API_NAME) --wait
 
 uninstall_operator:
-	helm uninstall $(OPERATOR_NAME) --wait
+	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) undeploy
 
 uninstall_mysql:
 	helm uninstall $(MYSQL_NAME) -n $(MYSQL_NAME)-cluster --wait
 	helm uninstall $(MYSQL_NAME)-operator -n $(MYSQL_NAME)-operator --wait
+
+uninstall_stunner:
+	helm uninstall $(STUNNER_NAME) --namespace=$(STUNNER_NAME)
 
 delete_frontend:
 	- docker rmi $(FRONTEND_IMAGE)

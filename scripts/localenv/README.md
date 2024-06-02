@@ -1,5 +1,9 @@
-# Install
-Install helm and kind
+# Prerequisites
+- docker
+- kubectl
+- kind
+- helm v3.15.0+
+- go v1.20.0+
 
 # How to run
 ## Single-node cluster
