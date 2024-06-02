@@ -2,14 +2,16 @@ import { Injectable } from "@angular/core";
 import {HttpClient, HttpEvent} from '@angular/common/http';
 import { Games, Game } from '../modules/games';
 import { Observable } from "rxjs";
-import { environment } from "../environment";
+import { AppConfigService } from "./app-config.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class GamesService {
-  private apiUrl = environment.apiUrl
-  constructor(private http: HttpClient) {  }
+  private apiUrl = this.configService.getConfig().apiUrl;
+  constructor(private http: HttpClient, private configService: AppConfigService) {
+    console.log(this.configService.getConfig())
+  }
 
   getGames(): Observable<Games> {
     return this.http.get<Games>(this.apiUrl + "/games/");

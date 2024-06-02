@@ -50,7 +50,7 @@ load_images: load_frontend load_api load_operator
 
 delete_images: delete_frontend delete_api delete_operator
 
-install: install_frontend install_mysql install_api install_stunner install_operator
+install: install_mysql install_api install_frontend install_stunner install_operator
 
 uninstall: uninstall_frontend uninstall_api uninstall_mysql uninstall_stunner uninstall_operator
 
@@ -87,6 +87,7 @@ load_operator:
 install_frontend:
 	helm install -f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values.yaml \
 		-f $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)/values-dev.yaml \
+		--set-string appConfig.apiUrl $(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
 		$(FRONTEND_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_FRONTEND)
 
 install_mysql:
