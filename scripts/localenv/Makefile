@@ -119,6 +119,8 @@ install_operator:
 	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) deploy IMG=$(OPERATOR_IMAGE)
 
 install_stunner:
+	helm repo add stunner https://l7mp.io/stunner
+	helm repo update
 	helm dependency build $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_STUNNER) --skip-refresh
 	helm install $(STUNNER_NAME) $(ROOT_DIRECTORY)/$(HELM_DIRECTORY)/$(HELM_STUNNER) \
 		--create-namespace --namespace=$(STUNNER_NAME)
