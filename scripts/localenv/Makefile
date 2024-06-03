@@ -155,17 +155,7 @@ redeploy_api: uninstall_api build_api load_api install_api redeploy_frontend
 redeploy_operator: uninstall_operator build_operator load_operator install_operator
 
 wait_for_mysql:
-	@while true; do \
-	    POD_STATUS=$$(kubectl get pod $(MYSQL_NAME)-0 -n $(MYSQL_NAME) --no-headers -o custom-columns=":status.phase" 2>/dev/null); \
-	    if [ "$$POD_STATUS" ]; then \
-	        echo "Pod $(MYSQL_NAME)-0 is created with status: $$POD_STATUS"; \
-	        break; \
-	    else \
-	        echo "Waiting for pod $(MYSQL_NAME)-0 to be created..."; \
-	        sleep 2; \
-	    fi \
-	done
-	kubectl wait --for=condition=Ready pod/$(MYSQL_NAME)-0 -n $(MYSQL_NAME) --timeout 600s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=router --timeout=600s
 
 help:
 	$(info $(HEADER))
