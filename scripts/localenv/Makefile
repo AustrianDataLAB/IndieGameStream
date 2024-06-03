@@ -133,7 +133,7 @@ uninstall_operator:
 	$(MAKE) -C $(ROOT_DIRECTORY)/$(OPERATOR_DIRECTORY) undeploy
 
 uninstall_mysql:
-	helm uninstall $(MYSQL_NAME) -n $(MYSQL_NAME)-cluster --wait
+	helm uninstall $(MYSQL_NAME) -n $(MYSQL_NAME) --wait
 	helm uninstall $(MYSQL_NAME)-operator -n $(MYSQL_NAME)-operator --wait
 
 uninstall_stunner:
