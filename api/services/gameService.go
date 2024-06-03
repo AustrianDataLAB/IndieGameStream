@@ -4,15 +4,8 @@ import (
 	"api/models"
 	"api/repositories"
 	"api/shared"
-	"context"
-	"fmt"
 	"github.com/google/uuid"
-	"log"
 	"mime/multipart"
-	"os"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
 type IGameService interface {
@@ -33,7 +26,6 @@ func (g gameService) FindAll() ([]models.Game, error) {
 func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) { return g.repository.FindByID(id) }
 
 func (g gameService) Save(file *multipart.FileHeader, title string) (*models.Game, error) {
-	//TODO save file
 
 	game := models.Game{
 		ID:              uuid.New(),
@@ -43,28 +35,7 @@ func (g gameService) Save(file *multipart.FileHeader, title string) (*models.Gam
 		Url:             "",
 	}
 
-	// TODO replace stamango
-	url := "https://stamango.blob.core.windows.net/"
-
-	//clientID := os.Getenv("AZURE_CLIENT_ID")
-	//opts := &azidentity.ManagedIdentityCredentialOptions{ID: azidentity.ClientID(clientID)}
-	//credential, err := azidentity.NewManagedIdentityCredential(opts)
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		log.Println(fmt.Sprintf("------------------------- err1: %s", err))
-		return nil, err
-	}
-
-	client, err := azblob.NewClient(url, credential, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	containerName := "indiegamestream"
-	_, err = client.CreateContainer(context.Background(), containerName, nil)
-	if err != nil {
-		return nil, err
-	}
+	// TODO uplaod game to azure using client created in startup
 
 	return &game, g.repository.Save(&game)
 }
