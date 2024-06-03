@@ -26,8 +26,3 @@ make
 ```bash
 make multi-node
 ```
-
-## Note
-The API pod may restart a couple of times (for me its 3 times) before it is actually up and running. This is because
-the MySQL pod even though it is ready still doesn't accept incoming connections. I thought that the easier solution right now is just
-to keep it like this and let the API pod restart a couple of times.
