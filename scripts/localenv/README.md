@@ -24,5 +24,5 @@ make
 
 ## Multi-node cluster
 ```bash
-make multi-node
+make multi_node
 ```
