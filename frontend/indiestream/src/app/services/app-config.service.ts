@@ -26,7 +26,7 @@ export class AppConfigService {
       this.config = data;
     }).catch( err => {
       console.error(err);
-      return Promise.reject(err)
+      console.log("Defaulting to development config", this.config)
     });
   }
 
