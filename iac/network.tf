@@ -1,11 +1,13 @@
 # a first network : vnets are larger network grouping, typically segmented via CIDR ranges
 # high level network design should be done on paper and widely communicated 
+
+/*
 resource "azurerm_virtual_network" "vnet-student" {
   name                = "vnet-student"
   address_space       = ["10.1.0.0/16"]
   location            = var.globals.location
   resource_group_name = data.azurerm_resource_group.rgruntime.name
-}
+}*/
 
 # a second network 
 # resource "azurerm_virtual_network" "vnet-platform" {
@@ -16,13 +18,14 @@ resource "azurerm_virtual_network" "vnet-student" {
 # }
 
 # subnets
+/*
 resource "azurerm_subnet" "snet-student-vm" {
   name                 = "snet-student-vm"
   resource_group_name  = data.azurerm_resource_group.rgruntime.name
   virtual_network_name = "vnet-student"
   depends_on           = [ azurerm_virtual_network.vnet-student ]
   address_prefixes       = ["10.1.1.0/24"]
-}
+}*/
 # # subnets
 # # A second subnet to demo peering the two so they can talk to each other
 # resource "azurerm_subnet" "snet-buildagents-k8s" {
@@ -35,10 +38,11 @@ resource "azurerm_subnet" "snet-student-vm" {
 
 # security groups need to be attached
 # in Azure, they attach to subnets  (in Openstack they attach to VMs and layer2 ports)
+/*
 resource "azurerm_subnet_network_security_group_association" "student-vm" {
   subnet_id                 = azurerm_subnet.snet-student-vm.id
   network_security_group_id = azurerm_network_security_group.student.id
-}
+}*/
 
 ######################################## ROLE ASSIGNEMENTS ##################################
 # In general, if we want terraform to assign roles to itself or other objects -> we need to be careful

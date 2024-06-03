@@ -1,4 +1,6 @@
 
+/*
+
 resource "azurerm_network_interface" "student" {
   name                = "nic-student"
   location            = data.azurerm_resource_group.rgruntime.location
@@ -18,7 +20,7 @@ resource "tls_private_key" "example_ssh" {
 
 ## Commented out to save money , VMs cost real money! Dont leave them on if you dont need them
 
-/*
+
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm"

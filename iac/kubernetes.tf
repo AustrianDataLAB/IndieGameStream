@@ -7,12 +7,12 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   default_node_pool {
     name       = "default"
     node_count = 1
-    vm_size    = "Standard_DS2_v2"
+    vm_size    = "Standard_B2ms"
   }
 
   network_profile {
     network_plugin     = "azure"
-    load_balancer_sku  = "standard"
+    load_balancer_sku  = "basic"
     outbound_type      = "loadBalancer"
   }
 
