@@ -7,7 +7,7 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.4/confi
 kubectl wait --namespace metallb-system \
                 --for=condition=ready pod \
                 --selector=app=metallb \
-                --timeout=90s
+                --timeout=600s
 lb_subnet=$(docker network inspect kind --format '{{json .}}' | jq -r '.IPAM.Config[0].Subnet')
 
 # Extract the base IP and calculate the range start and end
