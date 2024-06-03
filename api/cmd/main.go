@@ -71,12 +71,17 @@ func setupDatabase() *sql.DB {
 func setupAzureBlobContainer(azClient *azblob.Client) {
 
 	containerName := os.Getenv("AZURE_CONTAINER_NAME")
-	_, err := azClient.CreateContainer(context.Background(), containerName, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(fmt.Sprintf("Created Azure container %s", containerName))
+	containerClient := azClient.ServiceClient().NewContainerClient(containerName)
 
+	if containerClient != nil {
+		log.Println(fmt.Sprintf("Azure blob container with name %s exists already", containerName))
+	} else {
+		_, err := azClient.CreateContainer(context.Background(), containerName, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(fmt.Sprintf("Created Azure container %s", containerName))
+	}
 }
 
 func main() {
