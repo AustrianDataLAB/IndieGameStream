@@ -1,8 +1,6 @@
 name: Deploy to azure
 
 on: 
-  push:
-
   workflow_dispatch:
     inputs:
       purge:
@@ -85,9 +83,9 @@ jobs:
           export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
           terraform init
           terraform plan -out=tfplan.bin -input=false
-          terraform destroy -auto-approve "tfplan.bin"
-          terraform destroy -auto-approve "tfplan.bin"
-          terraform destroy -auto-approve "tfplan.bin"
+          terraform destroy
+          terraform destroy
+          terraform destroy
 
       - name: Logout of Azure
         run: az logout
