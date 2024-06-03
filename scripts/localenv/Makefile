@@ -57,7 +57,7 @@ load_images: load_frontend load_api load_operator
 delete_images: delete_frontend delete_api delete_operator
 
 # Creates all our components
-install: install_mysql install_api install_frontend install_stunner install_operator
+install: install_mysql install_stunner install_operator install_api install_frontend
 
 # Cleans up the cluster, removing all components
 uninstall: uninstall_frontend uninstall_api uninstall_mysql uninstall_stunner uninstall_operator
