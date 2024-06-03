@@ -18,13 +18,13 @@ import (
 	"os"
 )
 
-func setupRouter(db *sql.DB) *gin.Engine {
+func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
 
 	//Setup Repositories
 	gamesRepository := repositories.GameRepository(db)
-	gamesService := services.GameService(gamesRepository)
+	gamesService := services.GameService(gamesRepository, azClient)
 	gamesController := controllers.GameController(gamesService)
 
 	// Ping test
@@ -68,16 +68,10 @@ func setupDatabase() *sql.DB {
 	return db
 }
 
-func setupAzure() {
-	client, err := azureClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//TODO: Check if container is already existing
+func setupAzureBlobContainer(azClient *azblob.Client) {
 
 	containerName := os.Getenv("AZURE_CONTAINER_NAME")
-	_, err = client.CreateContainer(context.Background(), containerName, nil)
+	_, err := azClient.CreateContainer(context.Background(), containerName, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +84,8 @@ func main() {
 	loadConfig()
 
 	//Setup Azure
-	setupAzure()
+	azClient, _ := setupAzureClient()
+	setupAzureBlobContainer(azClient)
 
 	//Setup database
 	db := setupDatabase()
@@ -100,7 +95,7 @@ func main() {
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
 	//Setup Routes
-	r := setupRouter(db)
+	r := setupRouter(db, azClient)
 
 	// Listen and Server in 0.0.0.0:8080
 	err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
@@ -109,12 +104,18 @@ func main() {
 	}
 }
 
-func azureClient() (*azblob.Client, error) {
+func setupAzureClient() (*azblob.Client, error) {
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
 
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
-	return azblob.NewClient(url, credential, nil)
+
+	client, err := azblob.NewClient(url, credential, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }

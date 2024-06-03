@@ -6,6 +6,7 @@ import (
 	"api/shared"
 	"github.com/google/uuid"
 	"mime/multipart"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
 type IGameService interface {
@@ -17,6 +18,7 @@ type IGameService interface {
 
 type gameService struct {
 	repository repositories.IGameRepository
+	azClient *azblob.Client
 }
 
 func (g gameService) FindAll() ([]models.Game, error) {
@@ -44,8 +46,9 @@ func (g gameService) Delete(id uuid.UUID) error {
 	return g.repository.Delete(id)
 }
 
-func GameService(repository repositories.IGameRepository) IGameService {
+func GameService(repository repositories.IGameRepository, azClient *azblob.Client) IGameService {
 	return &gameService{
 		repository: repository,
+		azClient: azClient,
 	}
 }
