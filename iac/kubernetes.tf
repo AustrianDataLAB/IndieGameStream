@@ -12,7 +12,7 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
 
   network_profile {
     network_plugin     = "azure"
-    load_balancer_sku  = "basic"
+    load_balancer_sku  = "standard"
     outbound_type      = "loadBalancer"
   }
 
