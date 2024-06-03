@@ -5,8 +5,11 @@ import (
 	"api/repositories"
 	"api/scripts"
 	"api/services"
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -65,9 +68,29 @@ func setupDatabase() *sql.DB {
 	return db
 }
 
+func setupAzure() {
+	client, err := azureClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//TODO: Check if container is already existing
+
+	containerName := os.Getenv("AZURE_CONTAINER_NAME")
+	_, err = client.CreateContainer(context.Background(), containerName, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(fmt.Sprintf("Created Azure container %s", containerName))
+
+}
+
 func main() {
 	//Load config file
 	loadConfig()
+
+	//Setup Azure
+	setupAzure()
 
 	//Setup database
 	db := setupDatabase()
@@ -84,4 +107,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func azureClient() (*azblob.Client, error) {
+	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
+
+	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		return nil, err
+	}
+	return azblob.NewClient(url, credential, nil)
 }
