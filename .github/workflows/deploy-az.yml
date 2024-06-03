@@ -6,7 +6,6 @@ on:
       purge:
         description: 'Delete az infrastructure'
         required: false
-        default: false
         type: boolean
 
 env:
@@ -16,7 +15,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ ! github.event.inputs.purge }}
+    if: ${{ github.event.inputs.purge == 'false' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -53,7 +52,7 @@ jobs:
         run: az logout
   purge:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.purge }}
+    if: ${{ github.event.inputs.purge == 'true' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
