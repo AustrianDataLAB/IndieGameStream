@@ -2,7 +2,7 @@ module api
 
 go 1.20
 
-replace indiegamestream.com/indiegamestream => ../operator
+replace indiegamestream.com/indiegamestream => github.com/AustrianDataLAB/IndieGameStream/operator v0.0.0-20240602152718-e83f31e76ee0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
