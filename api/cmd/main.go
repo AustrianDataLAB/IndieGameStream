@@ -78,8 +78,13 @@ func setupDatabase() *sql.DB {
 }
 
 func k8sClient() client.Client {
+	kubeConfig, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	k8sc, err := client.New(
-		config.GetConfigOrDie(),
+		kubeConfig,
 		client.Options{Scheme: scheme.Scheme},
 	)
 	if err != nil {
