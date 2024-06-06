@@ -20,8 +20,7 @@ type IGameController interface {
 }
 
 type gameController struct {
-	service    services.IGameService
-	k8sService services.IK8sService
+	service services.IGameService
 }
 
 func (g gameController) GetAllGames(c *gin.Context) {
@@ -53,15 +52,15 @@ func (g gameController) GetGameById(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
+		if game == nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Game not found"})
+			return
+		}
 		if game.Owner != c.GetString("subject") {
 			log.Print(fmt.Printf("%s tried to access an resource of %s", c.GetString("subject"), game.Owner))
 			c.AbortWithStatusJSON(
 				http.StatusForbidden,
 				gin.H{"message": "You don't have permission to access this resource"})
-			return
-		}
-		if game == nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "Game not found"})
 			return
 		}
 
@@ -101,19 +100,6 @@ func (g gameController) UploadGame(c *gin.Context) {
 	//Save the game in the database and azure
 	game, err := g.service.Save(file, title, sub)
 
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-
-	//Deploy the game on kubernetes
-	err = g.k8sService.DeployGame(game)
-	if err != nil {
-		//TODO delete db entry or use transaction
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-
 	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, game.ID.String()))
 	c.AbortWithStatus(http.StatusCreated)
 	return
@@ -151,10 +137,9 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 	}
 }
 
-func GameController(service services.IGameService, k8s services.IK8sService) IGameController {
+func GameController(service services.IGameService) IGameController {
 	return &gameController{
-		service:    service,
-		k8sService: k8s,
+		service: service,
 	}
 }
 

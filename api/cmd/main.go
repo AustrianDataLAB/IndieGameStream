@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api/apis"
 	"api/controllers"
 	"api/repositories"
 	"api/scripts"
@@ -22,13 +23,18 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
 
-	//Setup Repositories
+	//Repositories
 	gamesRepository := repositories.GameRepository(db)
-	k8sService := services.K8sService(k8sClient())
-	gamesService := services.GameService(gamesRepository)
-	gamesController := controllers.GameController(gamesService)
 
+	//Apis
+	k8sApi := apis.K8sService(k8sClient())
+
+	//Services
+	gamesService := services.GameService(gamesRepository, k8sApi)
 	authService := services.AuthService()
+
+	//Controllers
+	gamesController := controllers.GameController(gamesService)
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
@@ -79,7 +85,7 @@ func k8sClient() client.Client {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	return &k8sc
+	return k8sc
 }
 
 func main() {
