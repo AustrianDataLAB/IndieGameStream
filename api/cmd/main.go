@@ -7,6 +7,7 @@ import (
 	"api/services"
 	"database/sql"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -18,6 +19,9 @@ import (
 func setupRouter(db *sql.DB) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
+
+	//Cors
+	r.Use(cors.Default())
 
 	//Setup Repositories
 	gamesRepository := repositories.GameRepository(db)
@@ -32,7 +36,7 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	})
 
 	//Upload a game
-	r.POST("/games/", CorsHeader, authService.Authorize, gamesController.UploadGame)
+	r.POST("/games", CorsHeader, authService.Authorize, gamesController.UploadGame)
 	//Get all uploaded games
 	r.GET("/games", CorsHeader, authService.Authorize, gamesController.GetAllGames)
 	//Get a specific game by its id
