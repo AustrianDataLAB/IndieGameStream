@@ -32,7 +32,7 @@ func setupRouter(db *sql.DB) *gin.Engine {
 	})
 
 	//Upload a game
-	r.POST("/games/", CorsHeader, authService.Authorize, gamesController.UploadGame)
+	r.POST("/games", CorsHeader, authService.Authorize, gamesController.UploadGame)
 	//Get all uploaded games
 	r.GET("/games", CorsHeader, authService.Authorize, gamesController.GetAllGames)
 	//Get a specific game by its id
