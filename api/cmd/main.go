@@ -10,9 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"k8s.io/client-go/kubernetes/scheme"
 	"log"
 	"net/http"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func setupRouter(db *sql.DB) *gin.Engine {
@@ -21,6 +24,7 @@ func setupRouter(db *sql.DB) *gin.Engine {
 
 	//Setup Repositories
 	gamesRepository := repositories.GameRepository(db)
+	k8sService := services.K8sService(k8sClient())
 	gamesService := services.GameService(gamesRepository)
 	gamesController := controllers.GameController(gamesService)
 
@@ -65,6 +69,17 @@ func setupDatabase() *sql.DB {
 	//Check if we have new migrations and apply them
 	scripts.MigrateDatabase(db)
 	return db
+}
+
+func k8sClient() client.Client {
+	k8sc, err := client.New(
+		config.GetConfigOrDie(),
+		client.Options{Scheme: scheme.Scheme},
+	)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return &k8sc
 }
 
 func main() {

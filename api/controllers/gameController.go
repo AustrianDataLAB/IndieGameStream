@@ -20,7 +20,8 @@ type IGameController interface {
 }
 
 type gameController struct {
-	service services.IGameService
+	service    services.IGameService
+	k8sService services.IK8sService
 }
 
 func (g gameController) GetAllGames(c *gin.Context) {
@@ -97,9 +98,18 @@ func (g gameController) UploadGame(c *gin.Context) {
 		return
 	}
 
+	//Save the game in the database and azure
 	game, err := g.service.Save(file, title, sub)
 
 	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	//Deploy the game on kubernetes
+	err = g.k8sService.DeployGame(game)
+	if err != nil {
+		//TODO delete db entry or use transaction
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
@@ -141,9 +151,10 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 	}
 }
 
-func GameController(service services.IGameService) IGameController {
+func GameController(service services.IGameService, k8s services.IK8sService) IGameController {
 	return &gameController{
-		service: service,
+		service:    service,
+		k8sService: k8s,
 	}
 }
 
