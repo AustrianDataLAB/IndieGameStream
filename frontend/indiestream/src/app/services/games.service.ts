@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpEvent, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
 import { Games, Game } from '../modules/games';
 import { Observable } from "rxjs";
 import { AppConfigService } from "./app-config.service";
@@ -10,7 +10,7 @@ import { AuthService} from "./auth.service";
 })
 export class GamesService {
   private apiUrl = this.configService.getConfig().apiUrl;
-  constructor(private http: HttpClient, , private authService: AuthService, private configService: AppConfigService) {
+  constructor(private http: HttpClient, private authService: AuthService, private configService: AppConfigService) {
     console.log(this.configService.getConfig())
   }
 

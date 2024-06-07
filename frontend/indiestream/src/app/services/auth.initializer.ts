@@ -1,7 +1,7 @@
-import {AuthConfig, OAuthService} from "angular-oauth2-oidc";
-import {Injectable, isDevMode} from '@angular/core';
-import {Router} from "@angular/router";
-import {AuthService} from "./auth.service";
+import { AuthConfig, OAuthService } from "angular-oauth2-oidc";
+import { Injectable, isDevMode } from '@angular/core';
+import { Router } from "@angular/router";
+import { AuthService } from "./auth.service";
 
 @Injectable({
   providedIn: 'root',
