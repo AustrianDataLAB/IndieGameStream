@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - develop
+    
+    tags:
+      - v*.*.*
 
   pull_request:
     branches:
@@ -52,7 +55,7 @@ jobs:
 
       - name: Build Docker image to test stage
         if: steps.check_test_stage.outputs.test_stage_exists == 'true'
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.image.directory }}
           file: ${{ matrix.image.directory }}/Dockerfile
@@ -66,7 +69,7 @@ jobs:
           docker run --rm ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}-test:${{ github.sha }}
 
       - name: Login to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
@@ -74,29 +77,29 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
-            type=match,pattern=\d.\d.\d.*
-            type=sha
+            type=semver,pattern={{version}}
+            type=sha,format=long
 
       - name: Build Docker image
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.image.directory }}
           file: ${{ matrix.image.directory }}/Dockerfile
           push: false
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.21.0
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}:${{ github.sha }}'
+          image-ref: '${{ fromJSON(steps.meta.outputs.json).tags[0] }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           limit-severities-for-sarif: true
@@ -104,12 +107,12 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Push Docker image
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.image.directory }}
           file: ${{ matrix.image.directory }}/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/${{ matrix.image.name }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       
       - name: Upload Trivy scan results to GitHub Security tab
