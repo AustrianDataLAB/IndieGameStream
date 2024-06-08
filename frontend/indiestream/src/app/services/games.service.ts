@@ -10,7 +10,7 @@ import { AuthService} from "./auth.service";
 })
 export class GamesService {
   private apiUrl = this.configService.getConfig().apiUrl;
-  constructor(private http: HttpClient, private authService: AuthService, private configService: AppConfigService) {
+  constructor(private http: HttpClient, private configService: AppConfigService) {
     console.log(this.configService.getConfig())
   }
 

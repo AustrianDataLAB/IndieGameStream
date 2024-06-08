@@ -2,16 +2,19 @@ import { AuthConfig, OAuthService } from "angular-oauth2-oidc";
 import { Injectable, isDevMode } from '@angular/core';
 import { Router } from "@angular/router";
 import { AuthService } from "./auth.service";
+import {AppConfigService} from "./app-config.service";
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthInitializer {
 
-  constructor( private oauthService: OAuthService, private router: Router, private authService: AuthService ) {
+  constructor( private oauthService: OAuthService, private appConfigService: AppConfigService,
+               private router: Router ) {
   }
 
   public initializeApp(): Promise<void> {
+    this.appConfigService.loadConfig();
     return new Promise((resolve, reject) => {
       const authConfig: AuthConfig = {
         issuer: 'https://accounts.google.com',
