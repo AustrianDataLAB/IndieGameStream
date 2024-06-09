@@ -8,7 +8,8 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const idToken = authService.getIdToken();
 
-  if (idToken) {
+  // bearer token is not allowed to be sent to this url
+  if (idToken && req.url !== 'https://accounts.google.com/.well-known/openid-configuration') {
     const cloned = req.clone({
       headers: req.headers.set('Authorization', `Bearer ${idToken}`)
     });
