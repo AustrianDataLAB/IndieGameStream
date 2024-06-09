@@ -1,0 +1,33 @@
+.left-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.right-toolbar {
+   padding-right: 1rem;
+   display: flex;
+   align-items: center;
+ }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidenav-container {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
+
+.sidenav-content {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.user-avatar {
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}

@@ -1,33 +1,27 @@
-<div class="games-table">
-  <table mat-table [dataSource]="games">
-    <ng-container matColumnDef="ID">
-      <th mat-header-cell *matHeaderCellDef> ID </th>
-      <td mat-cell *matCellDef="let game"> {{game.id}} </td>
-    </ng-container>
-    <ng-container matColumnDef="title">
-      <th mat-header-cell *matHeaderCellDef> Title </th>
-      <td mat-cell *matCellDef="let game"> {{game.title}} </td>
-    </ng-container>
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef> Status </th>
-      <td mat-cell *matCellDef="let game"> {{game.status}} </td>
-    </ng-container>
-    <ng-container matColumnDef="url">
-      <th mat-header-cell *matHeaderCellDef> URL </th>
-      <td mat-cell *matCellDef="let game"> {{game.url}} </td>
-    </ng-container>
-    <ng-container matColumnDef="refresh">
-      <th mat-header-cell *matHeaderCellDef> Refresh </th>
-      <td mat-cell *matCellDef="let game"><button mat-flat-button color="primary"
-                                                  (click)="refreshGame(game.id)">Refresh</button></td>
-    </ng-container>
-    <ng-container matColumnDef="delete">
-      <th mat-header-cell *matHeaderCellDef> Delete </th>
-      <td mat-cell *matCellDef="let game"><button mat-flat-button color="warn"
-                                                  (click)="deleteGame(game.id)">Refresh</button></td>
-    </ng-container>
+<h2>Hi {{authService.getName()}}</h2>
 
-    <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-    <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
-  </table>
+<div *ngIf="games.length === 0">
+  <div class="text-with-icon no-games-warning">
+    <mat-icon>info</mat-icon>
+    <div>You have not uploaded any games yet :/</div>
+  </div>
+  <button mat-raised-button color="primary" [routerLink]="['/upload']"> Upload now</button>
 </div>
+
+<mat-card *ngFor="let game of games" class="game-card">
+  <mat-card-header>
+    <mat-card-title>{{ game.title }}</mat-card-title>
+    <mat-card-subtitle>Game ID: {{ game.id }}</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <p>Status: {{ game.status }}</p>
+    <a href="{{game.url}}">URL: {{ game.url }}</a>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-button color="primary" (click)="refreshGame(game.id)">Refresh</button>
+    <button mat-button color="warn" (click)="deleteGame(game.id)">Delete</button>
+  </mat-card-actions>
+</mat-card>
+
+<button *ngIf="games.length !== 0" mat-raised-button color="primary" (click)="refreshAllGames()">Refresh All</button>
+

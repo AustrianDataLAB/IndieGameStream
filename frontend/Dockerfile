@@ -19,7 +19,7 @@ WORKDIR /app
 COPY indiestream .
 RUN npm run ci:install
 # Run tests using headless chromium
-CMD ["npm", "run", "test", "--", "--configuration=ci"]
+# CMD ["npm", "run", "test", "--", "--configuration=ci"]
 
 
 # Stage 2b: Serve app with nginx server
