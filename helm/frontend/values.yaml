@@ -1,0 +1,13 @@
+appName: frontend
+replicas: 1
+port: 80
+
+image:
+  name: ghcr.io/austriandatalab/indiegamestream/frontend
+  label: v1.0.0 # Change to proper version tag
+  pullPolicy: IfNotPresent
+
+webRootDirectory: /usr/share/nginx/html
+
+appConfig:
+  production: true

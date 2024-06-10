@@ -1,0 +1,8 @@
+image:
+  name: indiegamestream/api
+  label: localenv
+  pullPolicy: Never
+
+env:
+  ginMode: debug
+  mysqlRootPassword: root

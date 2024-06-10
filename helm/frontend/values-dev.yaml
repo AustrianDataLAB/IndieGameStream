@@ -1,0 +1,7 @@
+image:
+  name: indiegamestream/frontend
+  label: localenv
+  pullPolicy: Never
+
+appConfig:
+  production: false

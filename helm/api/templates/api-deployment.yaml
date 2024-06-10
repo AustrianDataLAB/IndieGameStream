@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.appName }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.appName }}
+        image: {{ .Values.image.name }}:{{ .Values.image.label }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.port }}
+        env:
+        - name: PORT
+          value: {{ .Values.port | quote }}
+        - name: GIN_MODE
+          value: {{ .Values.env.ginMode | quote }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.env.mysqlDatabase | quote }}
+        - name: MYSQL_ROOT_USER
+          value: {{ .Values.env.mysqlRootUser | quote }}
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.env.mysqlRootPassword | quote }}
+        - name: MYSQL_HOST
+          value: {{ .Values.env.mysqlHost | quote }}
+        - name: MYSQL_PORT
+          value: {{ .Values.env.mysqlPort | quote }}
