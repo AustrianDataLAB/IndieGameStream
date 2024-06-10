@@ -6,17 +6,20 @@ import (
 	"api/repositories"
 	"api/scripts"
 	"api/services"
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v5"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net/http"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func setupRouter(db *sql.DB) *gin.Engine {
@@ -77,14 +80,45 @@ func setupDatabase() *sql.DB {
 	return db
 }
 
-func k8sClient() client.Client {
-	kubeConfig, err := config.GetConfig()
+func getKubeConfig() armcontainerservice.ManagedClustersClientListClusterUserCredentialsResponse {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("failed to obtain a credential: %v", err)
+	}
+	ctx := context.Background()
+	clientFactory, err := armcontainerservice.NewClientFactory(
+		os.Getenv("AZURERM_SUBSCRIPTION_ID"), cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
+	res, err := clientFactory.NewManagedClustersClient().ListClusterUserCredentials(ctx,
+		os.Getenv("AZURERM_RESOURCE_GROUP_NAME"),
+		os.Getenv("AZURE_AKS_CLUSTER_NAME"),
+		&armcontainerservice.ManagedClustersClientListClusterUserCredentialsOptions{ServerFqdn: nil, Format: nil})
+	if err != nil {
+		log.Fatalf("failed to finish the request: %v", err)
 	}
 
+	return res
+}
+
+func k8sClient() client.Client {
+	kubeConfig := getKubeConfig()
+	if len(kubeConfig.Kubeconfigs) == 0 {
+		log.Fatalf("The kubeconfig request was successful but it's response body is empty")
+	}
+	if len(kubeConfig.Kubeconfigs) > 1 {
+		log.Println("WARNING: Multiple kube-config's have been found. The first one will be used.")
+	}
+
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeConfig.Kubeconfigs[0].Value)
+	if err != nil {
+		log.Fatalf("failed to load kube config: %v", err)
+	}
+	restConfig, err := clientConfig.ClientConfig()
+
 	k8sc, err := client.New(
-		kubeConfig,
+		restConfig,
 		client.Options{Scheme: scheme.Scheme},
 	)
 	if err != nil {
