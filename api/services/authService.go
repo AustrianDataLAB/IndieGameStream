@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type IAuthService interface {
@@ -29,7 +30,7 @@ func (_ authService) Authorize(c *gin.Context) {
 		return
 	}*/
 
-	tokenString := c.GetHeader("Authorization")
+	tokenString := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 	payload, err := idtoken.Validate(context.Background(), tokenString, os.Getenv("OAUTH_CLIENT"))
 
 	if err != nil {
