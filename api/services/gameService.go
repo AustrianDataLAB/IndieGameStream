@@ -71,6 +71,13 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string) (*mode
 }
 
 func (g gameService) Delete(id uuid.UUID) error {
+
+	containerName := os.Getenv("AZURE_CONTAINER_NAME")
+	_, err := g.azClient.DeleteBlob(context.Background(), containerName, id.String(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return g.repository.Delete(id)
 }
 
