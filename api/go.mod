@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/dranikpg/dto-mapper v0.2.1
-	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
