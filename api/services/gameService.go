@@ -53,7 +53,6 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string) (*mode
 		log.Fatal(err)
 	}
 
-	// TODO RESPONSE 403: This request is not authorized to perform this operation using this permission. ERROR CODE: AuthorizationPermissionMismatch
 	_, err = g.azClient.UploadFile(context.Background(), containerName, game.ID.String(), dst, nil)
 	if err != nil {
 		log.Fatal(err)

@@ -89,7 +89,7 @@ func main() {
 	loadConfig()
 
 	//Setup Azure
-	azClient, _ := setupAzureClient()
+	azClient, _ := setupAzureBlobClient()
 	setupAzureBlobContainer(azClient)
 
 	//Setup database
@@ -109,7 +109,7 @@ func main() {
 	}
 }
 
-func setupAzureClient() (*azblob.Client, error) {
+func setupAzureBlobClient() (*azblob.Client, error) {
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
 
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
