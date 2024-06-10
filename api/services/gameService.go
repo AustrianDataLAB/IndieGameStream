@@ -40,19 +40,7 @@ func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) {
 
 	//If the game url is empty, try to get it from kubernetes
 	if game.Url == "" {
-		game.Url, err = g.k8s.ReadGameUrl(game.ID)
-		if err != nil {
-			log.Println(fmt.Sprintf("Error reading game url: %s", err))
-			//We can ignore this error because we try it again next time
-			//Maybe the deployment is not ready yet
-		} else {
-			//Save the changes in the database
-			err = g.repository.Save(game)
-			if err != nil {
-				log.Println(fmt.Sprintf("Error updating game: %s", err))
-			}
-			//We don't want to throw an error, we just log it
-		}
+		g.updateGameUrl(game)
 	}
 
 	return g.repository.FindByID(id)
@@ -95,6 +83,22 @@ func (g gameService) Save(file *multipart.FileHeader, title string, owner string
 
 func (g gameService) Delete(id uuid.UUID) error {
 	return g.repository.Delete(id)
+}
+
+func (g gameService) updateGameUrl(game *models.Game) {
+	url, err := g.k8s.ReadGameUrl(game.ID)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error reading game url: %s", err))
+		//We can ignore this error because we try it again next time
+		//Maybe the deployment is not ready yet
+	} else {
+		game.Url = url
+		//Save the changes in the database
+		err := g.repository.Save(game)
+		if err != nil {
+			log.Println(fmt.Sprintf("Error updating game: %s", err))
+		}
+	}
 }
 
 func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi) IGameService {
