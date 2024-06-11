@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type IAuthService interface {
@@ -18,7 +19,7 @@ type authService struct {
 
 func (_ authService) Authorize(c *gin.Context) {
 	//Check if OAUTH_CLIENT has been set
-	if len(os.Getenv("OAUTH_CLIENT")) == 0 {
+	/*if len(os.Getenv("OAUTH_CLIENT")) == 0 {
 		//if not set & we are in production mode, abort
 		if os.Getenv("GIN_MODE") == "release" {
 			log.Fatalf("OAUTH_CLIENT is not set, cannot authorize requests")
@@ -27,9 +28,9 @@ func (_ authService) Authorize(c *gin.Context) {
 		log.Println("OAUTH_CLIENT is not set, cannot authorize requests")
 		c.Set("subject", "")
 		return
-	}
+	}*/
 
-	tokenString := c.GetHeader("Authorization")
+	tokenString := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 	payload, err := idtoken.Validate(context.Background(), tokenString, os.Getenv("OAUTH_CLIENT"))
 
 	if err != nil {

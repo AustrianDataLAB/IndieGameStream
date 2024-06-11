@@ -1,5 +1,3 @@
-
-
 #Stage 1: Compile and build
 FROM golang:1.22-alpine as build
 # Set destination for COPY
@@ -12,7 +10,7 @@ COPY . .
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -C cmd -o /api
 
-#Stage 2: Run tests
+#Stage 2a: Run tests
 FROM golang:1.22-alpine as test
 WORKDIR /app
 COPY . .
@@ -20,20 +18,20 @@ CMD ["go", "test", "./tests"]
 
 #Stage 3: Prepare release
 FROM alpine:3.20 as prepare
-#Download and microsoft CA Certiciates
+#Download Google CA Certiciates
 RUN apk update && apk add curl
 WORKDIR /usr/local/share/ca-certificates
-RUN curl -ks 'https://cacerts.digicert.com/BaltimoreCyberTrustRoot.crt' -o '/usr/local/share/ca-certificates/BaltimoreCyberTrustRoot.crt'
-RUN curl -ks 'https://cacerts.digicert.com/DigiCertGlobalRootCA.crt' -o '/usr/local/share/ca-certificates/DigiCertGlobalRootCA.crt'
-RUN curl -ks 'https://cacerts.digicert.com/DigiCertGlobalRootG2.crt' -o '/usr/local/share/ca-certificates/DigiCertGlobalRootG2.crt'
-RUN curl -ks 'https://cacerts.digicert.com/DigiCertGlobalRootG3.crt' -o '/usr/local/share/ca-certificates/DigiCertGlobalRootG2.crt'
-RUN curl -ks 'https://www.microsoft.com/pkiops/certs/Microsoft%20ECC%20Root%20Certificate%20Authority%202017.crt' -o '/usr/local/share/ca-certificates/MicrosoftRootCertificateAuthority.crt'
-#Add microsoft CA to trusted root certificates
+RUN curl -ks 'https://i.pki.goog/r1.pem' -o '/usr/local/share/ca-certificates/r1.pem'
+RUN curl -ks 'https://i.pki.goog/r2.pem' -o '/usr/local/share/ca-certificates/r2.pem'
+RUN curl -ks 'https://i.pki.goog/r3.pem' -o '/usr/local/share/ca-certificates/r3.pem'
+RUN curl -ks 'https://i.pki.goog/r4.pem' -o '/usr/local/share/ca-certificates/r4.pem'
+RUN curl -ks 'https://i.pki.goog/gsr4.pem' -o '/usr/local/share/ca-certificates/gsr4.pem'
+#Add Google CA to trusted root certificates
 RUN /usr/sbin/update-ca-certificates
 
-#Stage $: Run Api
-FROM scratch as release
 
+#Stage 2b: Run Api
+FROM scratch as release
 #Copy trusted CA certificates
 COPY --from=prepare /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 #Copy migration scripts

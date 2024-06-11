@@ -21,6 +21,8 @@ import (
 func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
+	//Cors
+	r.Use(CORSMiddleware())
 
 	//Setup Repositories
 	gamesRepository := repositories.GameRepository(db)
@@ -35,13 +37,13 @@ func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 	})
 
 	//Upload a game
-	r.POST("/games/", CorsHeader, authService.Authorize, gamesController.UploadGame)
+	r.POST("/games", authService.Authorize, gamesController.UploadGame)
 	//Get all uploaded games
-	r.GET("/games", CorsHeader, authService.Authorize, gamesController.GetAllGames)
+	r.GET("/games", authService.Authorize, gamesController.GetAllGames)
 	//Get a specific game by its id
-	r.GET("/games/:id", CorsHeader, authService.Authorize, gamesController.GetGameById)
+	r.GET("/games/:id", authService.Authorize, gamesController.GetGameById)
 	//Delete a specific game, identified by its id
-	r.DELETE("/games/:id", CorsHeader, authService.Authorize, gamesController.DeleteGameById)
+	r.DELETE("/games/:id", authService.Authorize, gamesController.DeleteGameById)
 
 	return r
 }
@@ -68,6 +70,23 @@ func setupDatabase() *sql.DB {
 	//Check if we have new migrations and apply them
 	scripts.MigrateDatabase(db)
 	return db
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+		} else {
+			c.Next()
+		}
+	}
 }
 
 func setupAzureBlobContainer(azClient *azblob.Client) {
@@ -109,20 +128,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-}
-
-func CorsHeader(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-	if c.Request.Method == "OPTIONS" {
-		c.AbortWithStatus(204)
-		return
-	}
-
-	c.Next()
 }
 
 func setupAzureBlobClient() (*azblob.Client, error) {
