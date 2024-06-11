@@ -19,13 +19,11 @@ export class AuthInitializer {
       const authConfig: AuthConfig = {
         issuer: 'https://accounts.google.com',
         strictDiscoveryDocumentValidation: false,
-        clientId: '516825360638-s63uq4ecthilcghh1r1ojbhuqlo3s2ef.apps.googleusercontent.com',
-        dummyClientSecret: 'redacted',
+        clientId: '516825360638-ai7mibm97c1i5o66l18iqlfuqffl1dba.apps.googleusercontent.com',
         redirectUri: window.location.origin,
         logoutUrl: window.location.origin,
         oidc: true,
         scope: 'openid profile email',
-        responseType: 'code',
         showDebugInformation: isDevMode(),
       };
       this.oauthService.configure(authConfig);
