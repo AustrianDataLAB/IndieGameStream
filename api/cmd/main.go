@@ -99,7 +99,7 @@ func setupAzureBlobContainer(azClient *azblob.Client) {
 	} else {
 		_, err := azClient.CreateContainer(context.Background(), containerName, nil)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Creating Azure Blob Container failed")
 		}
 		log.Println(fmt.Sprintf("Created Azure container %s", containerName))
 	}
@@ -110,7 +110,7 @@ func main() {
 	loadConfig()
 
 	//Setup Azure
-	azClient, _ := setupAzureBlobClient()
+	azClient := setupAzureBlobClient()
 	setupAzureBlobContainer(azClient)
 
 	//Setup database
@@ -130,18 +130,18 @@ func main() {
 	}
 }
 
-func setupAzureBlobClient() (*azblob.Client, error) {
+func setupAzureBlobClient() *azblob.Client {
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
 
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		return nil, err
+		log.Fatal("Initializing DefaultAzureCredential failed")
 	}
 
 	client, err := azblob.NewClient(url, credential, nil)
 	if err != nil {
-		return nil, err
+		log.Fatal("Initializing Azure Blob Client failed")
 	}
 
-	return client, nil
+	return client
 }

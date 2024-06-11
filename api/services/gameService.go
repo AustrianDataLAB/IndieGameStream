@@ -6,13 +6,15 @@ import (
 	"api/shared"
 	"context"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/google/uuid"
 	"io"
 	"log"
 	"mime/multipart"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"os"
 )
+
+var azureBlobContainerName = os.Getenv("AZURE_CONTAINER_NAME")
 
 type IGameService interface {
 	FindByID(id uuid.UUID) (*models.Game, error)
@@ -24,7 +26,7 @@ type IGameService interface {
 
 type gameService struct {
 	repository repositories.IGameRepository
-	azClient *azblob.Client
+	azClient   *azblob.Client
 }
 
 func (g gameService) ReadOwner(id uuid.UUID) (string, error) {
@@ -48,8 +50,6 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		Owner:           owner,
 	}
 
-	containerName := os.Getenv("AZURE_CONTAINER_NAME")
-
 	// Creating file on disk because UploadFile() needs *os.File
 	dst, err := os.Create(fileHeader.Filename)
 	file, err := fileHeader.Open()
@@ -59,7 +59,7 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		log.Fatal(err)
 	}
 
-	_, err = g.azClient.UploadFile(context.Background(), containerName, game.ID.String(), dst, nil)
+	_, err = g.azClient.UploadFile(context.Background(), azureBlobContainerName, game.ID.String(), dst, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,8 +78,7 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 
 func (g gameService) Delete(id uuid.UUID) error {
 
-	containerName := os.Getenv("AZURE_CONTAINER_NAME")
-	_, err := g.azClient.DeleteBlob(context.Background(), containerName, id.String(), nil)
+	_, err := g.azClient.DeleteBlob(context.Background(), azureBlobContainerName, id.String(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,6 +89,6 @@ func (g gameService) Delete(id uuid.UUID) error {
 func GameService(repository repositories.IGameRepository, azClient *azblob.Client) IGameService {
 	return &gameService{
 		repository: repository,
-		azClient: azClient,
+		azClient:   azClient,
 	}
 }
