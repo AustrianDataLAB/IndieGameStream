@@ -5,8 +5,11 @@ import (
 	"api/repositories"
 	"api/scripts"
 	"api/services"
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -15,13 +18,13 @@ import (
 	"os"
 )
 
-func setupRouter(db *sql.DB) *gin.Engine {
+func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
 
 	//Setup Repositories
 	gamesRepository := repositories.GameRepository(db)
-	gamesService := services.GameService(gamesRepository)
+	gamesService := services.GameService(gamesRepository, azClient)
 	gamesController := controllers.GameController(gamesService)
 
 	authService := services.AuthService()
@@ -67,9 +70,29 @@ func setupDatabase() *sql.DB {
 	return db
 }
 
+func setupAzureBlobContainer(azClient *azblob.Client) {
+
+	containerName := os.Getenv("AZURE_CONTAINER_NAME")
+	containerClient := azClient.ServiceClient().NewContainerClient(containerName)
+
+	if containerClient != nil {
+		log.Println(fmt.Sprintf("Azure blob container with name %s exists already", containerName))
+	} else {
+		_, err := azClient.CreateContainer(context.Background(), containerName, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(fmt.Sprintf("Created Azure container %s", containerName))
+	}
+}
+
 func main() {
 	//Load config file
 	loadConfig()
+
+	//Setup Azure
+	azClient, _ := setupAzureBlobClient()
+	setupAzureBlobContainer(azClient)
 
 	//Setup database
 	db := setupDatabase()
@@ -79,7 +102,7 @@ func main() {
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
 	//Setup Routes
-	r := setupRouter(db)
+	r := setupRouter(db, azClient)
 
 	// Listen and Server in 0.0.0.0:8080
 	err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
@@ -100,4 +123,20 @@ func CorsHeader(c *gin.Context) {
 	}
 
 	c.Next()
+}
+
+func setupAzureBlobClient() (*azblob.Client, error) {
+	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
+
+	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := azblob.NewClient(url, credential, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
