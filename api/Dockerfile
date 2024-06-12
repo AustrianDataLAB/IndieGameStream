@@ -1,5 +1,5 @@
 #Stage 1: Compile and build
-FROM golang:1.20.12-alpine3.19 as build
+FROM golang:1.22-alpine as build
 # Set destination for COPY
 WORKDIR /app
 # Download Go modules
