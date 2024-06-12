@@ -56,18 +56,18 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 	_, err = io.Copy(dst, file)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	_, err = g.azClient.UploadFile(context.Background(), azureBlobContainerName, game.ID.String(), dst, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Deleting file from disk
 	err = os.Remove(dst.Name())
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	storageAccount := os.Getenv("AZURE_STORAGE_ACCOUNT")
