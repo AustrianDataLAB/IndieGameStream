@@ -16,5 +16,4 @@ The docker image will use the following environment variables:
 | MYSQL_DATABASE                                     | "api"         |                        |
 | MYSQL_ROOT_USER                                    | "root"        |                        |
 | <span style="color:red">MYSQL_ROOT_PASSWORD</span> | <span style="color:red">"changeme"</span>    |                        |
-| OAUTH_CLIENT                                    |         | Google OAuth Client ID |
 If you use the docker image directly (without our provided docker-compose), you must specify them.
