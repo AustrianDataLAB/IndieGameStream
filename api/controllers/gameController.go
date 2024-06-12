@@ -78,9 +78,16 @@ func (g gameController) GetGameById(c *gin.Context) {
 }
 
 func (g gameController) UploadGame(c *gin.Context) {
+	var requestBody dtos.UploadGameRequestBody
 
-	title := c.Query("title")
-	if len(title) == 0 {
+	//Try to read the title from body
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		//If it is not in the body, check if it is a query parameter
+		requestBody.Title = c.GetString("title")
+	}
+
+	if len(requestBody.Title) == 0 {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Title is required"})
 		return
 	}
@@ -97,7 +104,7 @@ func (g gameController) UploadGame(c *gin.Context) {
 		return
 	}
 
-	game, err := g.service.Save(file, title, sub)
+	game, err := g.service.Save(file, requestBody.Title, sub)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
