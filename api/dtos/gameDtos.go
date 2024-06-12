@@ -18,3 +18,7 @@ type GetGameByIdResponseBody struct {
 	Status shared.GameStatus `json:"status"`
 	Url    string            `json:"url"`
 }
+
+type UploadGameRequestBody struct {
+	Title string `json:"title"`
+}
