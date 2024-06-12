@@ -40,6 +40,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-verbose-reporter": "^0.0.8",
     "puppeteer": "~22.6.5",
-    "typescript": "~5.4.2"
+    "typescript": "~5.4.2",
+    "angular-oauth2-oidc": "17.0.2"
   }
 }
