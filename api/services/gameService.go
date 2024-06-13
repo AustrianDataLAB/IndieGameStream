@@ -5,11 +5,8 @@ import (
 	"api/models"
 	"api/repositories"
 	"api/shared"
-	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/google/uuid"
-	"io"
 	"log"
 	"mime/multipart"
 	"os"
@@ -27,7 +24,7 @@ type IGameService interface {
 
 type gameService struct {
 	repository repositories.IGameRepository
-	azClient   *azblob.Client
+	azure      apis.IAzureApi
 	k8s        apis.IK8sApi
 }
 
@@ -59,28 +56,13 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		Owner:           owner,
 	}
 
-	// Creating file on disk because UploadFile() needs *os.File
-	dst, err := os.Create(fileHeader.Filename)
-	file, err := fileHeader.Open()
-	_, err = io.Copy(dst, file)
-
+	//Upload game to azure blob storage container
+	storageLocation, err := g.azure.UploadGame(azureBlobContainerName, game.ID.String(), fileHeader)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = g.azClient.UploadFile(context.Background(), azureBlobContainerName, game.ID.String(), dst, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Deleting file from disk
-	err = os.Remove(dst.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	storageAccount := os.Getenv("AZURE_STORAGE_ACCOUNT")
-	game.StorageLocation = fmt.Sprintf("https://%s.blob.core.windows.net/games/%s", storageAccount, game.ID.String())
+	game.StorageLocation = storageLocation
 
 	//Deploy the game on kubernetes
 	err = g.k8s.DeployGame(&game)
@@ -101,9 +83,9 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 
 func (g gameService) Delete(id uuid.UUID) error {
 
-	_, err := g.azClient.DeleteBlob(context.Background(), azureBlobContainerName, id.String(), nil)
+	err := g.azure.DeleteGame(azureBlobContainerName, id.String())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return g.repository.Delete(id)
@@ -125,10 +107,10 @@ func (g gameService) updateGameUrl(game *models.Game) {
 	}
 }
 
-func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azClient *azblob.Client) IGameService {
+func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azure apis.IAzureApi) IGameService {
 	return &gameService{
 		repository: repository,
 		k8s:        k8s,
-		azClient:   azClient,
+		azure:      azure,
 	}
 }
