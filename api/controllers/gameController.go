@@ -105,6 +105,9 @@ func (g gameController) UploadGame(c *gin.Context) {
 
 	//Save the game in the database and azure
 	game, err := g.service.Save(file, title, sub)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+	}
 
 	c.Header("content-location", fmt.Sprintf("%s/games/%s", c.Request.Host, game.ID.String()))
 	c.AbortWithStatus(http.StatusCreated)
