@@ -6,7 +6,6 @@ import (
 	"google.golang.org/api/idtoken"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -18,20 +17,8 @@ type authService struct {
 }
 
 func (_ authService) Authorize(c *gin.Context) {
-	//Check if OAUTH_CLIENT has been set
-	/*if len(os.Getenv("OAUTH_CLIENT")) == 0 {
-		//if not set & we are in production mode, abort
-		if os.Getenv("GIN_MODE") == "release" {
-			log.Fatalf("OAUTH_CLIENT is not set, cannot authorize requests")
-		}
-		//otherwise we are in debug mode and we can accept it
-		log.Println("OAUTH_CLIENT is not set, cannot authorize requests")
-		c.Set("subject", "")
-		return
-	}*/
-
 	tokenString := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
-	payload, err := idtoken.Validate(context.Background(), tokenString, os.Getenv("OAUTH_CLIENT"))
+	payload, err := idtoken.Validate(context.Background(), tokenString, "516825360638-ai7mibm97c1i5o66l18iqlfuqffl1dba.apps.googleusercontent.com")
 
 	if err != nil {
 		log.Println(err.Error())

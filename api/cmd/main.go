@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -22,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func setupRouter(db *sql.DB) *gin.Engine {
+func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 	//Setup Gin
 	r := gin.Default()
 	//Cors
@@ -30,12 +31,14 @@ func setupRouter(db *sql.DB) *gin.Engine {
 
 	//Repositories
 	gamesRepository := repositories.GameRepository(db)
+	gamesService := services.GameService(gamesRepository)
+	gamesController := controllers.GameController(gamesService)
 
 	//Apis
 	k8sApi := apis.K8sService(k8sClient())
 
 	//Services
-	gamesService := services.GameService(gamesRepository, k8sApi)
+	gamesService := services.GameService(gamesRepository, k8sApi, azClient)
 	authService := services.AuthService()
 
 	//Controllers
@@ -151,9 +154,29 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
+func setupAzureBlobContainer(azClient *azblob.Client) {
+
+	containerName := os.Getenv("AZURE_CONTAINER_NAME")
+	containerClient := azClient.ServiceClient().NewContainerClient(containerName)
+
+	if containerClient != nil {
+		log.Println(fmt.Sprintf("Azure blob container with name %s exists already", containerName))
+	} else {
+		_, err := azClient.CreateContainer(context.Background(), containerName, nil)
+		if err != nil {
+			log.Fatal("Creating Azure Blob Container failed")
+		}
+		log.Println(fmt.Sprintf("Created Azure container %s", containerName))
+	}
+}
+
 func main() {
 	//Load config file
 	loadConfig()
+
+	//Setup Azure
+	azClient := setupAzureBlobClient()
+	setupAzureBlobContainer(azClient)
 
 	//Setup database
 	db := setupDatabase()
@@ -163,11 +186,27 @@ func main() {
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
 	//Setup Routes
-	r := setupRouter(db)
+	r := setupRouter(db, azClient)
 
 	// Listen and Server in 0.0.0.0:8080
 	err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func setupAzureBlobClient() *azblob.Client {
+	url := fmt.Sprintf("https://%s.blob.core.windows.net/", os.Getenv("AZURE_STORAGE_ACCOUNT"))
+
+	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatal("Initializing DefaultAzureCredential failed")
+	}
+
+	client, err := azblob.NewClient(url, credential, nil)
+	if err != nil {
+		log.Fatal("Initializing Azure Blob Client failed")
+	}
+
+	return client
 }
