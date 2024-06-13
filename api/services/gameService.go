@@ -103,7 +103,7 @@ func (g gameService) Delete(id uuid.UUID) error {
 
 	_, err := g.azClient.DeleteBlob(context.Background(), azureBlobContainerName, id.String(), nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return g.repository.Delete(id)
