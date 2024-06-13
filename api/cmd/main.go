@@ -31,8 +31,6 @@ func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
 
 	//Repositories
 	gamesRepository := repositories.GameRepository(db)
-	gamesService := services.GameService(gamesRepository)
-	gamesController := controllers.GameController(gamesService)
 
 	//Apis
 	k8sApi := apis.K8sService(k8sClient())

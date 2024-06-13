@@ -27,6 +27,8 @@ type IGameService interface {
 
 type gameService struct {
 	repository repositories.IGameRepository
+	azClient   *azblob.Client
+	k8s        apis.IK8sApi
 }
 
 func (g gameService) ReadOwner(id uuid.UUID) (string, error) {
@@ -41,9 +43,12 @@ func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) {
 	game, err := g.repository.FindByID(id)
 	if err != nil {
 		return nil, err
+	} else {
+		return game, nil
 	}
+}
 
-func (g gameService) Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error) {
+func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner string) (*models.Game, error) {
 
 	game := models.Game{
 		ID:              uuid.New(),
@@ -77,9 +82,8 @@ func (g gameService) Save(file *multipart.FileHeader, title string, owner string
 	storageAccount := os.Getenv("AZURE_STORAGE_ACCOUNT")
 	game.StorageLocation = fmt.Sprintf("https://%s.blob.core.windows.net/games/%s", storageAccount, game.ID.String())
 
-
 	//Deploy the game on kubernetes
-	err := g.k8s.DeployGame(&game)
+	err = g.k8s.DeployGame(&game)
 	if err != nil {
 		return nil, err
 	}
@@ -125,5 +129,6 @@ func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azCl
 	return &gameService{
 		repository: repository,
 		k8s:        k8s,
+		azClient:   azClient,
 	}
 }
