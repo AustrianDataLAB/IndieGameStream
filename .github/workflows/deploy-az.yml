@@ -72,7 +72,20 @@ jobs:
       - name: Check working cluster
         run: kubectl get pods -A
 
+      - name: Install stunner
+        working-directory: ./scripts/localenv
+        run: make install_stunner
+
+      - name: Install game operator manifests
+        working-directory: ./operator
+        run: make install
+
+      - name: Deploy game operator
+        working-directory: ./operator
+        run: make deploy IMG=ghcr.io/austriandatalab/indiegamestream/operator:sha-36404cc8de274ca24575023405a2f7868dffa610
       
+
+
       - name: Logout of Azure
         run: az logout
   purge:
@@ -92,6 +105,8 @@ jobs:
 
       - name: Login to Azure
         run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+      
 
 
       - name: Terraform Apply
