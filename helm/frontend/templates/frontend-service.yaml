@@ -10,6 +10,9 @@ metadata:
     tailscale.com/hostname: "frontend"
 spec:
   type: LoadBalancer
+  {{ if .Values.service.spec.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.service.spec.loadBalancerClass }}
+  {{ end }}
   selector:
     app: {{ .Values.appName }}
   ports:
