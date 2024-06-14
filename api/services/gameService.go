@@ -12,8 +12,6 @@ import (
 	"os"
 )
 
-var azureBlobContainerName = os.Getenv("AZURE_CONTAINER_NAME")
-
 type IGameService interface {
 	FindByID(id uuid.UUID) (*models.Game, error)
 	Save(file *multipart.FileHeader, title string, owner string) (*models.Game, error)
@@ -57,7 +55,7 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 	}
 
 	//Upload game to azure blob storage container
-	storageLocation, err := g.azure.UploadGame(azureBlobContainerName, game.ID.String(), fileHeader)
+	storageLocation, err := g.azure.UploadGame(os.Getenv("AZURE_CONTAINER_NAME"), game.ID.String(), fileHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +65,12 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 	//Deploy the game on kubernetes
 	err = g.k8s.DeployGame(&game)
 	if err != nil {
+		//Delete the game when deploying on kubernetes failed
+		errDel := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), game.ID.String())
+		if errDel != nil {
+			log.Println(fmt.Sprintf("Delete game for %s in azure failed", title))
+		}
+
 		return nil, err
 	}
 
@@ -83,7 +87,7 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 
 func (g gameService) Delete(id uuid.UUID) error {
 
-	err := g.azure.DeleteGame(azureBlobContainerName, id.String())
+	err := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
 	if err != nil {
 		return err
 	}

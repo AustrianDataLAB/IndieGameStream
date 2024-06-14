@@ -9,8 +9,6 @@ import (
 	"os"
 )
 
-var storageAccount = os.Getenv("AZURE_STORAGE_ACCOUNT")
-
 type IAzureApi interface {
 	UploadGame(blobContainerName string, gameID string, fileHeader *multipart.FileHeader) (string, error)
 	DeleteGame(blobContainerName string, gameID string) error
@@ -19,26 +17,22 @@ type IAzureApi interface {
 func (g azureApi) UploadGame(blobContainerName string, gameID string, fileHeader *multipart.FileHeader) (string, error) {
 	ctx := context.Background()
 
-	// Creating file on disk because UploadFile() needs *os.File
-	dst, err := os.Create(fileHeader.Filename)
 	file, err := fileHeader.Open()
-	_, err = io.Copy(dst, file)
 	if err != nil {
 		return "", err
 	}
 
-	_, err = g.azure.UploadFile(ctx, blobContainerName, gameID, dst, nil)
+	gameBytes, err := io.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
 
-	// Deleting file from disk
-	err = os.Remove(dst.Name())
+	_, err = g.azure.UploadBuffer(ctx, blobContainerName, gameID, gameBytes, nil)
 	if err != nil {
 		return "", err
 	}
 
-	storageLocation := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", storageAccount, blobContainerName, gameID)
+	storageLocation := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", os.Getenv("AZURE_STORAGE_ACCOUNT"), blobContainerName, gameID)
 
 	return storageLocation, nil
 }
