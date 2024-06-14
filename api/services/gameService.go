@@ -1,20 +1,16 @@
 package services
 
 import (
+	"api/apis"
 	"api/models"
 	"api/repositories"
 	"api/shared"
-	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/google/uuid"
-	"io"
 	"log"
 	"mime/multipart"
 	"os"
 )
-
-var azureBlobContainerName = os.Getenv("AZURE_CONTAINER_NAME")
 
 type IGameService interface {
 	FindByID(id uuid.UUID) (*models.Game, error)
@@ -26,7 +22,8 @@ type IGameService interface {
 
 type gameService struct {
 	repository repositories.IGameRepository
-	azClient   *azblob.Client
+	azure      apis.IAzureApi
+	k8s        apis.IK8sApi
 }
 
 func (g gameService) ReadOwner(id uuid.UUID) (string, error) {
@@ -37,7 +34,14 @@ func (g gameService) FindAllByOwner(owner string) ([]models.Game, error) {
 	return g.repository.FindAllByOwner(owner)
 }
 
-func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) { return g.repository.FindByID(id) }
+func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) {
+	game, err := g.repository.FindByID(id)
+	if err != nil {
+		return nil, err
+	} else {
+		return game, nil
+	}
+}
 
 func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner string) (*models.Game, error) {
 
@@ -50,45 +54,67 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		Owner:           owner,
 	}
 
-	// Creating file on disk because UploadFile() needs *os.File
-	dst, err := os.Create(fileHeader.Filename)
-	file, err := fileHeader.Open()
-	_, err = io.Copy(dst, file)
-
+	//Upload game to azure blob storage container
+	storageLocation, err := g.azure.UploadGame(os.Getenv("AZURE_CONTAINER_NAME"), game.ID.String(), fileHeader)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = g.azClient.UploadFile(context.Background(), azureBlobContainerName, game.ID.String(), dst, nil)
+	game.StorageLocation = storageLocation
+
+	//Deploy the game on kubernetes
+	err = g.k8s.DeployGame(&game)
 	if err != nil {
+		//Delete the game when deploying on kubernetes failed
+		errDel := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), game.ID.String())
+		if errDel != nil {
+			log.Println(fmt.Sprintf("Delete game for %s in azure failed", title))
+		}
+
 		return nil, err
 	}
 
-	// Deleting file from disk
-	err = os.Remove(dst.Name())
+	//Try to read the game url
+	game.Url, err = g.k8s.ReadGameUrl(game.ID)
 	if err != nil {
-		return nil, err
+		log.Println(fmt.Sprintf("Error reading game url: %s", err))
+		//We can ignore this error because we try it again in FindByID
+		//Maybe the deployment is not ready yet
 	}
-
-	storageAccount := os.Getenv("AZURE_STORAGE_ACCOUNT")
-	game.StorageLocation = fmt.Sprintf("https://%s.blob.core.windows.net/games/%s", storageAccount, game.ID.String())
 
 	return &game, g.repository.Save(&game)
 }
 
 func (g gameService) Delete(id uuid.UUID) error {
 
-	_, err := g.azClient.DeleteBlob(context.Background(), azureBlobContainerName, id.String(), nil)
+	err := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return g.repository.Delete(id)
 }
 
-func GameService(repository repositories.IGameRepository, azClient *azblob.Client) IGameService {
+func (g gameService) updateGameUrl(game *models.Game) {
+	url, err := g.k8s.ReadGameUrl(game.ID)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error reading game url: %s", err))
+		//We can ignore this error because we try it again next time
+		//Maybe the deployment is not ready yet
+	} else {
+		game.Url = url
+		//Save the changes in the database
+		err := g.repository.Save(game)
+		if err != nil {
+			log.Println(fmt.Sprintf("Error updating game: %s", err))
+		}
+	}
+}
+
+func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azure apis.IAzureApi) IGameService {
 	return &gameService{
 		repository: repository,
-		azClient:   azClient,
+		k8s:        k8s,
+		azure:      azure,
 	}
 }

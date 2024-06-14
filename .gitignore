@@ -3,4 +3,5 @@ api/.idea/
 api/internal/
 .idea/
 
+api/secrets.txt
 helm/*/charts
