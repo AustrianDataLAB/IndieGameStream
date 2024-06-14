@@ -4,6 +4,7 @@ import { Games, Game } from '../modules/games';
 import { Observable } from "rxjs";
 import { AppConfigService } from "./app-config.service";
 import { AuthService} from "./auth.service";
+import {FormGroup} from "@angular/forms";
 
 @Injectable({
   providedIn: 'root'
@@ -27,12 +28,18 @@ export class GamesService {
     return this.http.get<Game>(this.apiUrl + "/games/" + id)
   }
 
-  deleteGame(id: string): void{
+  deleteGame(id: string): void {
     this.http.delete(this.apiUrl + "/games/" + id)
   }
 
-  uploadGame(file: File): Observable<HttpEvent<Object>>{
-    return this.http.post(this.apiUrl + "/games", file, {
+  uploadGame(gameForm: FormGroup): Observable<HttpEvent<Object>> {
+    const formData = new FormData();
+    formData.append('title', gameForm.get('title')?.value);
+    const files: FileList = gameForm.get('file')?.value;
+    if (files && files.length > 0) {
+      formData.append('file', files[0]);
+    }
+    return this.http.post(this.apiUrl + "/games", formData, {
       reportProgress: true,
       observe: 'events'
     });
