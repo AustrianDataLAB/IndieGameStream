@@ -48,11 +48,15 @@ jobs:
         run: |
           az aks command invoke -n testCluster -g rg-service-not2day --command "helm uninstall tailscale-operator --namespace=tailscale || true"
           az aks command invoke -n testCluster -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait"
-      - name: Apply stunner operator
-        working-directory: ./helm/stunner
-        run: |
-          az aks command invoke -n testCluster -g rg-service-not2day --command "helm uninstall stunner --namespace=stunner || true"
-          az aks command invoke -n testCluster -g rg-service-not2day --command "helm repo add stunner https://l7mp.io/stunner && helm repo update && helm dependency build . --skip-refresh && helm install stunner . --create-namespace --namespace=stunner"
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{secrets.TAILSCALE_CLIENT_ID}}
+          oauth-secret: ${{secrets.TAILSCALE_CLIENT_SECRET}}
+          tags: tag:ci
+      - name: Configure kubernetes config
+        run: tailscale configure kubeconfig tailscale-operator
+
       
       - name: Logout of Azure
         run: az logout
