@@ -20,7 +20,7 @@ The docker image will use the following environment variables:
 | AZURE_CLIENT_ID                                    |         |  |
 | AZURE_TENANT_ID                                    |         |  |
 | AZURE_STORAGE_ACCOUNT                              |         |  |
-| AZURE_CLIENT_SECRET                                |         |  |
+| <span style="color:red"> AZURE_CLIENT_SECRET      </span> |         |  |
 | AZURE_CONTAINER_NAME                               |         |  |
 | AZURE_AKS_CLUSTER_NAME                             |         |  |
 | AZURERM_SUBSCRIPTION_ID                            |         |  |
