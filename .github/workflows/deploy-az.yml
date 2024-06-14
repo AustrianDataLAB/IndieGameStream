@@ -27,6 +27,18 @@ jobs:
         with:
           terraform_version: latest
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: 'latest'
+        id: install1
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+        id: install2
+
 
       - name: Login to Azure
         run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
@@ -56,6 +68,9 @@ jobs:
           tags: tag:ci
       - name: Configure kubernetes config
         run: tailscale configure kubeconfig tailscale-operator
+
+      - name: Check working cluster
+        run: kubectl get pods -A
 
       
       - name: Logout of Azure
