@@ -16,12 +16,15 @@ The docker image will use the following environment variables:
 | MYSQL_DATABASE                                     | "api"         |                        |
 | MYSQL_ROOT_USER                                    | "root"        |                        |
 | <span style="color:red">MYSQL_ROOT_PASSWORD</span> | <span style="color:red">"changeme"</span>    |                        |
-| OAUTH_CLIENT                                    |         |              |
+| OAUTH_CLIENT                                       |         |              |
 | AZURE_CLIENT_ID                                    |         |  |
 | AZURE_TENANT_ID                                    |         |  |
-| AZURE_CLIENT_SECRET                                    |         |  |
-| AZURERM_SUBSCRIPTION_ID                                    |         |  |
-| AZURERM_RESOURCE_GROUP_NAME                                    |         |  |
+| AZURE_STORAGE_ACCOUNT                              |         |  |
+| AZURE_CLIENT_SECRET                                |         |  |
+| AZURE_CONTAINER_NAME                               |         |  |
+| AZURE_AKS_CLUSTER_NAME                             |         |  |
+| AZURERM_SUBSCRIPTION_ID                            |         |  |
+| AZURERM_RESOURCE_GROUP_NAME                        |         |  |
 
 
 If you use the docker image directly (without our provided docker-compose), you must specify them.
