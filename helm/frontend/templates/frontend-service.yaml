@@ -5,6 +5,9 @@ metadata:
   namespace: {{ .Values.appName }}
   labels:
     app: {{ .Values.appName }}
+  annotations:
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: "frontend"
 spec:
   type: LoadBalancer
   selector:
