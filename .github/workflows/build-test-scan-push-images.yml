@@ -7,7 +7,6 @@ on:
     
     tags:
       - v*.*.*
-      - feature/aks-ci
 
   pull_request:
     branches:
