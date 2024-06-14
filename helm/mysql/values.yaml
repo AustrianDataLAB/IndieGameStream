@@ -1,0 +1,4 @@
+serverInstances: 1
+
+tls:
+  useSelfSigned: true
