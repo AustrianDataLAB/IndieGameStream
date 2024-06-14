@@ -1,8 +1,8 @@
-resource "azurerm_kubernetes_cluster" "testCluster" {
-  name                = "testCluster"
+resource "azurerm_kubernetes_cluster" "indiegamestream-cluster" {
+  name                = var.cluster_name
   location            = data.azurerm_resource_group.rgruntime.location
   resource_group_name = data.azurerm_resource_group.rgruntime.name
-  dns_prefix          = "testCluster"
+  dns_prefix          = var.cluster_name
 
   default_node_pool {
     name       = "default"
