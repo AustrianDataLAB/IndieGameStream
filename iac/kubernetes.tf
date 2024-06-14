@@ -1,4 +1,4 @@
-resource "azurerm_kubernetes_cluster" "indiegamestream-cluster" {
+resource "azurerm_kubernetes_cluster" "testCluster" {
   name                = var.cluster_name
   location            = data.azurerm_resource_group.rgruntime.location
   resource_group_name = data.azurerm_resource_group.rgruntime.name
