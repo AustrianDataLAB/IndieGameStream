@@ -501,6 +501,9 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 }
 
 func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
+
+	//className := "tailscale"
+
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -508,6 +511,7 @@ func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": selector},
+			//	LoadBalancerClass: &className,
 			Ports: []corev1.ServicePort{
 				{
 					Port:       port,
