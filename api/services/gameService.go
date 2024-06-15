@@ -10,6 +10,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
+	"strings"
 )
 
 type IGameService interface {
@@ -86,12 +87,35 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 }
 
 func (g gameService) Delete(id uuid.UUID) error {
-
-	err := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
+	//Get the game, we need the details to delete it from k8s
+	game, err := g.repository.FindByID(id)
 	if err != nil {
 		return err
 	}
 
+	//Delete from azure storage
+	err = g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
+	if err != nil {
+		if isNotFound(err) {
+			log.Println(fmt.Sprintf("Game %s is already deleted from azure storage", id.String()))
+		} else {
+			return err
+		}
+	}
+
+	//Delete from k8s/aks, if the game has an url
+	if game.Url != "" {
+		err = g.k8s.DeleteGame(game)
+		if err != nil {
+			if isNotFound(err) {
+				log.Println(fmt.Sprintf("Game %s is already deleted from aks", id.String()))
+			} else {
+				return err
+			}
+		}
+	}
+
+	//Delete from db and return
 	return g.repository.Delete(id)
 }
 
@@ -117,4 +141,9 @@ func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azur
 		k8s:        k8s,
 		azure:      azure,
 	}
+}
+
+func isNotFound(err error) bool {
+	e := strings.ToLower(err.Error())
+	return strings.Contains(e, "not found") || strings.Contains(e, "notfound")
 }

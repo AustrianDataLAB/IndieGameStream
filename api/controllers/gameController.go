@@ -136,6 +136,7 @@ func (g gameController) DeleteGameById(c *gin.Context) {
 			return
 		}
 
+		//Delete game from db, azure storage and k8s/aks
 		err = g.service.Delete(_uuid)
 		if err != nil { //TODO handle different errors
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})

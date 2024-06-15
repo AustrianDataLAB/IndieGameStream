@@ -15,6 +15,17 @@ import (
 type IK8sApi interface {
 	DeployGame(game *models.Game) error
 	ReadGameUrl(gameId uuid.UUID) (string, error)
+	DeleteGame(game *models.Game) error
+}
+
+func (g k8sApi) DeleteGame(game *models.Game) error {
+	resource, err := createAndVerifyGameResource(game)
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	return g.k8sClient.Delete(ctx, resource)
 }
 
 func (g k8sApi) DeployGame(game *models.Game) error {
