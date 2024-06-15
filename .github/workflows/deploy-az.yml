@@ -86,7 +86,7 @@ jobs:
 
       - name: Install stunner
         working-directory: ./scripts/localenv
-        run: make install_stunner
+        run: make install_stunner || true
 
       - name: Install game operator manifests
         working-directory: ./operator
