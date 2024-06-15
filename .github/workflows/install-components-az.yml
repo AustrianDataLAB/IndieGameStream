@@ -65,7 +65,7 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
           helm install --set-string service.loadBalancerClass=tailscale \
-            --set service.type=LoadBalancer
+            --set service.type=LoadBalancer \
             --set-json 'service.annotations={"tailscale.com/hostname": "grafana"}' \
             grafana grafana/grafana --create-namespace --namespace monitoring
 
