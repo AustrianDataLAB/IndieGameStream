@@ -1,9 +1,6 @@
 name: Uninstall components from Azure
 
 on:
-  push:
-    branches:
-      - feature/80-seperate-iac-install
   workflow_dispatch:
     inputs:
       component:
@@ -21,7 +18,6 @@ on:
 jobs:
   uninstall:
     runs-on: ubuntu-latest
-    if: ${{ github.event.name != 'push' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

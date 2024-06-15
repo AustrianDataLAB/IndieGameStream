@@ -1,9 +1,6 @@
 name: Install components to Azure
 
 on: 
-  push:
-    branches:
-      - feature/80-seperate-iac-install
   workflow_dispatch:
     inputs:
       component:
@@ -28,7 +25,6 @@ env:
 jobs:
   install:
     runs-on: ubuntu-latest
-    if: ${{ github.event.name != 'push' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

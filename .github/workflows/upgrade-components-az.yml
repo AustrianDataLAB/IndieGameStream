@@ -2,10 +2,7 @@
 # MySQL and STUNner should already be installed when using this workflow
 name: Upgrade components on Azure
 
-on: 
-  push:
-    branches:
-      - feature/80-seperate-iac-install
+on:
   workflow_dispatch:
     inputs:
       component:
@@ -28,7 +25,6 @@ env:
 jobs:
   upgrade:
     runs-on: ubuntu-latest
-    if: ${{ github.event.name != 'push' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
