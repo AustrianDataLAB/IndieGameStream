@@ -95,17 +95,26 @@ func (g gameService) Delete(id uuid.UUID) error {
 	//Delete from azure storage
 	err = g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
 	if err != nil {
-		//TODO ignore NotFound error
-		return err
+		if isNotFound(err) {
+			log.Println(fmt.Sprintf("Game %s is already deleted from azure storage", id.String()))
+		} else {
+			return err
+		}
 	}
 
-	//Delete from k8s/aks
-	err = g.k8s.DeleteGame(game)
-	if err != nil {
-		//TODO ignore NotFound error
-		return err
+	//Delete from k8s/aks, if the game has an url
+	if game.Url != "" {
+		err = g.k8s.DeleteGame(game)
+		if err != nil {
+			if isNotFound(err) {
+				log.Println(fmt.Sprintf("Game %s is already deleted from aks", id.String()))
+			} else {
+				return err
+			}
+		}
 	}
 
+	//Delete from db and return
 	return g.repository.Delete(id)
 }
 
@@ -131,4 +140,9 @@ func GameService(repository repositories.IGameRepository, k8s apis.IK8sApi, azur
 		k8s:        k8s,
 		azure:      azure,
 	}
+}
+
+func isNotFound(err error) bool {
+	e := strings.ToLower(err.Error())
+	return strings.Contains(e, "not found") || strings.Contains(e, "notfound")
 }
