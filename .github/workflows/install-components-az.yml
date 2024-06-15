@@ -122,7 +122,7 @@ jobs:
         run: |
           helm install -f values.yaml \
             --set-string env.mysqlRootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-            --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }} \
+            --set-string env.azureTenantId=${{ secrets.AZURERM_TENANT_ID }} \
             --set-string env.azureClientId=${{ secrets.CLIENT_ID }} \
             --set-string env.azureClientSecret=${{ secrets.CLIENT_SECRET }} \
             --set-string env.azureStorageAccount=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }} \
