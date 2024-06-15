@@ -14,3 +14,9 @@ variable "cluster_name" {
   type = string
   default = "indiegamestream-cluster"
 }
+
+variable "aks_admin_group_object_ids" {
+  description = "aks admin group ids"
+  type = list(string)
+  default = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
+}
