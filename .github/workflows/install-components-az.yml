@@ -120,7 +120,7 @@ jobs:
         working-directory: ./helm/api
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
         run: |
-          helm upgrade -f values.yaml \
+          helm install -f values.yaml \
             --set-string env.mysqlRootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }}
             --set-string env.azureClientId=${{ secrets.CLIENT_ID }}

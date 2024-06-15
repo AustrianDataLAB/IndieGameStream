@@ -103,15 +103,6 @@ jobs:
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
         run: |
           helm upgrade -f values.yaml \
-            --set-string env.mysqlRootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-            --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }}
-            --set-string env.azureClientId=${{ secrets.CLIENT_ID }}
-            --set-string env.azureClientSecret=${{ secrets.CLIENT_SECRET }}
-            --set-string env.azureStorageAccount=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}
-            --set-string env.azureContainerName=${{ secrets.AZURERM_CONTAINER_NAME }}
-            --set-string env.azureAksClusterName=${{ secrets.AZURERM_AKS_CLUSTER_NAME }}
-            --set-string env.azurermSubscriptionId=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
-            --set-string env.azurermResourceGroupName=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}
             --set-string image.label=${{ github.event.inputs.label }} \
             api .
 
@@ -126,7 +117,7 @@ jobs:
         working-directory: ./helm/frontend
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
-          helm install -f values.yaml \
+          helm upgrade -f values.yaml \
             --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
             --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
