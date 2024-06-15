@@ -28,7 +28,8 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   }
 
   identity {
-    type = "SystemAssigned"
+    type = "UserAssigned"
+    identity_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
   }
 
   private_cluster_enabled = true
