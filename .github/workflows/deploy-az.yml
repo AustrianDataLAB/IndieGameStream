@@ -12,7 +12,7 @@ env:
   REGISTRY: ghcr.io
   NAMESPACE: austriandatalab
   SUB_NAMESPACE: indiegamestream
-  LABEL: sha-0b6a39a352f3f14af64ed47e244b7f117b8c9946
+  LABEL: sha-350add069a4899d95e950578b37b43e2fd092fd2
 jobs:
   deploy:
     runs-on: ubuntu-latest
