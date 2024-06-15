@@ -86,9 +86,23 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 }
 
 func (g gameService) Delete(id uuid.UUID) error {
-
-	err := g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
+	//Get the game, we need the details to delete it from k8s
+	game, err := g.repository.FindByID(id)
 	if err != nil {
+		return err
+	}
+
+	//Delete from azure storage
+	err = g.azure.DeleteGame(os.Getenv("AZURE_CONTAINER_NAME"), id.String())
+	if err != nil {
+		//TODO ignore NotFound error
+		return err
+	}
+
+	//Delete from k8s/aks
+	err = g.k8s.DeleteGame(game)
+	if err != nil {
+		//TODO ignore NotFound error
 		return err
 	}
 
