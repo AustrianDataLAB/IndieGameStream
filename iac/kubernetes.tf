@@ -40,13 +40,6 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   private_cluster_enabled = true
 }
 
-resource "azurerm_role_assignment" "admin" {
-  for_each = toset(var.aks_admin_group_object_ids)
-  scope = azurerm_kubernetes_cluster.testCluster.id
-  role_definition_name = "Azure Kubernetes Service Cluster User Role"
-  principal_id = each.value
-}
-
 /*
 output "client_certificate" {
   value = azurerm_kubernetes_cluster.testCluster.kube_config.0.client_certificate
