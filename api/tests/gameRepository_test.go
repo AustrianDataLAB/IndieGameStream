@@ -88,10 +88,11 @@ func Test_Create_Game_Without_Id_Should_Succeed_And_SetId(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 	mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO games"))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO games")).
-		WithArgs(sqlmock.AnyArg(), game.Title, game.StorageLocation, game.Status, game.Url, game.Owner).
+		WithArgs(sqlmock.AnyArg(), game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	//Run the test
@@ -128,6 +129,7 @@ func Test_Create_Game_With_Id_Should_Succeed(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
@@ -136,7 +138,7 @@ func Test_Create_Game_With_Id_Should_Succeed(t *testing.T) {
 	mock.ExpectPrepare("INSERT INTO games")
 
 	mock.ExpectExec("INSERT INTO games").
-		WithArgs(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner).
+		WithArgs(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	//Run the test
@@ -176,20 +178,21 @@ func Test_Save_Existing_Game_Should_Succeed(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(id, "", "", "", "", ""),
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+			AddRow(id, "", "", "", "", "", ""),
 	)
 
 	mock.ExpectPrepare(regexp.
-		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?"))
+		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?"))
 
 	mock.ExpectExec(regexp.
-		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")).
-		WithArgs(game.Title, game.StorageLocation, game.Status, game.Url, game.ID).
+		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")).
+		WithArgs(game.Title, game.StorageLocation, game.Status, game.Url, game.ID, game.FileName).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	//Run the test
@@ -229,12 +232,13 @@ func Test_Find_Game_By_Id_Should_Succeed(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(id, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+			AddRow(id, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName),
 	)
 
 	//Run the test
@@ -295,6 +299,7 @@ func Test_Find_Two_Games_Of_Same_Owner_Should_Succeed(t *testing.T) {
 		Status:          "AMockC",
 		Url:             "AMockD",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	gameB := models.Game{
@@ -304,15 +309,16 @@ func Test_Find_Two_Games_Of_Same_Owner_Should_Succeed(t *testing.T) {
 		Status:          "BMockC",
 		Url:             "BMockD",
 		Owner:           "MockOwner",
+		FileName:        "TestFile2.nes",
 	}
 
 	mock.ExpectPrepare(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?"))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
 		WithArgs("MockOwner").
 		WillReturnRows(
-			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner).
-				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner),
+			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner, gameA.FileName).
+				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner, gameB.FileName),
 		)
 
 	//Run the test
@@ -350,7 +356,7 @@ func Test_Find_Games_When_Database_Is_Empty_Should_Succeed(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
 		WithArgs("MockOwner").
 		WillReturnRows(
-			sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}),
+			sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}),
 		)
 
 	//Run the test
@@ -389,11 +395,12 @@ func Test_Read_Owner_Should_Succeed(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT Owner FROM games WHERE ID = ?")).
 		WithArgs(id).
-		WillReturnRows(sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}))
+		WillReturnRows(sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}))
 
 	//Run the test
 	repository := repositories.GameRepository(db)
@@ -427,6 +434,7 @@ func Test_Read_Owner_Should_Throw_When_Database_Is_Empty(t *testing.T) {
 		Status:          "MockStatus",
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
+		FileName:        "TestFile.nes",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT Owner FROM games WHERE ID = ?")).
@@ -481,6 +489,10 @@ func compareGames(t *testing.T, game *models.Game, res *models.Game) {
 
 	if game.Owner != res.Owner {
 		t.Errorf("game owner has been changed")
+	}
+
+	if game.FileName != res.FileName {
+		t.Errorf("game file name has been changed")
 	}
 
 }
