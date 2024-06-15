@@ -47,7 +47,7 @@ jobs:
       - name: Apply tailscale operator
         working-directory: ./iac
         run: |
-          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait || true"
+          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait || true"
       - name: Connect to tailscale
         uses: tailscale/github-action@v2
         with:
