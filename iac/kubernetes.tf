@@ -9,12 +9,12 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
     node_count = 2
     vm_size    = "Standard_B2ms"
     upgrade_settings {
-      drain_timeout_in_minutes = 0
-      max_surge = "10%"
+      drain_timeout_in_minutes = 5
+      max_surge = "50%"
       node_soak_duration_in_minutes = 0
     }
     max_pods = 110
-    temporary_name_for_rotation = "upgrade2"
+    temporary_name_for_rotation = "upgrade"
   }
 
   network_profile {
