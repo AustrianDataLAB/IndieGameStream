@@ -34,12 +34,17 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   azure_active_directory_role_based_access_control {
     managed = true
     azure_rbac_enabled = true
-    admin_group_object_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
+    admin_group_object_ids = var.aks_admin_group_object_ids
   }
 
-  role_based_access_control_enabled = true
-
   private_cluster_enabled = true
+}
+
+resource "azurerm_role_assignment" "admin" {
+  for_each = toset(var.aks_admin_group_object_ids)
+  scope = azurerm_kubernetes_cluster.testCluster.id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id = each.value
 }
 
 /*
