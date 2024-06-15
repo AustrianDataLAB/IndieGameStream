@@ -14,7 +14,7 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
       node_soak_duration_in_minutes = 0
     }
     max_pods = 110
-    temporary_name_for_rotation = "upgrade2"
+    temporary_name_for_rotation = "upgrade"
   }
 
   network_profile {
