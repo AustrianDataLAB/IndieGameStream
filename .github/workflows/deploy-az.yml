@@ -99,4 +99,5 @@ jobs:
           terraform destroy -auto-approve || true
 
       - name: Logout of Azure
+        if: always()
         run: az logout

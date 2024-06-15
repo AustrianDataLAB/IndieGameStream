@@ -80,3 +80,7 @@ jobs:
         working-directory: ./helm/frontend
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: helm uninstall frontend
+
+      - name: Logout of Azure
+        if: always()
+        run: az logout

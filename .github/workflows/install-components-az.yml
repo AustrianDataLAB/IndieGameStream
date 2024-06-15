@@ -137,3 +137,7 @@ jobs:
             --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
             --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
+
+      - name: Logout of Azure
+        if: always()
+        run: az logout
