@@ -112,7 +112,7 @@ jobs:
             --set-string env.azureAksClusterName=${{ secrets.AZURERM_AKS_CLUSTER_NAME }}
             --set-string env.azurermSubscriptionId=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
             --set-string env.azurermResourceGroupName=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}
-            --set-string image.label=${{ env.LABEL }} \
+            --set-string image.label=${{ github.event.inputs.label }} \
             api .
 
       - name: Wait for external IP of API
@@ -128,7 +128,7 @@ jobs:
         run: |
           helm install -f values.yaml \
             --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
-            --set-string image.label=${{ env.LABEL }} \
+            --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
 
       - name: Logout of Azure

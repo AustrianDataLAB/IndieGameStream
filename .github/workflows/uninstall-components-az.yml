@@ -13,6 +13,8 @@ on:
         - api-mysql
         - operator
         - operator-stunner
+        - stunner
+        - mysql
         - all
 
 jobs:
