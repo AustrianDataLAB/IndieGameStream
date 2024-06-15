@@ -1,3 +1,5 @@
+{{- required ".Values.appConfig.production is required!" .Values.appConfig.production -}}
+{{- required ".Values.appConfig.apiUrl is required!"  .Values.appConfig.apiUrl -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
