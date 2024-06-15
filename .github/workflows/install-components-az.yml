@@ -66,6 +66,7 @@ jobs:
           helm repo update
           helm install --set-string service.loadBalancerClass=tailscale \
             --set service.type=LoadBalancer \
+            --set-string adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
             --set-json 'service.annotations={"tailscale.com/hostname": "grafana"}' \
             grafana grafana/grafana --create-namespace --namespace monitoring
 
