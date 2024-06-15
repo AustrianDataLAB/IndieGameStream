@@ -59,8 +59,7 @@ jobs:
       - name: Apply tailscale operator
         working-directory: ./iac
         run: |
-          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm uninstall tailscale-operator --namespace=tailscale || true"
-          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait"
+          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait || true"
       - name: Connect to tailscale
         uses: tailscale/github-action@v2
         with:
@@ -83,6 +82,14 @@ jobs:
           helm install mysql mysql-operator/mysql-innodbcluster --version "2.1.3" --wait \
             --create-namespace --namespace=mysql -f values.yaml \
             --set-string credentials.root.password=${{ secrets.MYSQL_ROOT_PASSWORD }} || true
+
+      - name: Install Open Policy Gatekeeper
+        working-directory: ./scripts/opa
+        run: |
+          helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+          helm repo update
+          helm install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace --wait || true
+          kubectl apply -f loadbalancerclass_mutator.yaml
 
       - name: Install stunner
         working-directory: ./scripts/localenv

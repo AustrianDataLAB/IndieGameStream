@@ -8,14 +8,14 @@ spec:
     kinds: ["Service"]
     versions: ["v1"]
   match:
-    scope: Cluster
+    scope: Namespaced | Cluster
     kinds:
     - apiGroups: ["*"]
       kinds: ["Service"]
-  location: "spec[type:LoadBalancer].loadBalancerClass"
+    labelSelector:
+      matchExpressions:
+      - {key: "stunner.l7mp.io/owned-by", operator: "In", values: ["stunner"]}
+  location: "spec.loadBalancerClass"
   parameters:
     assign:
       value: "tailscale"
-    pathTests:
-    - subPath: "spec.loadBalancerClass"
-      condition: MustNotExist
