@@ -23,6 +23,10 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
     outbound_type      = "loadBalancer"
   }
 
+  storage_profile {
+    blob_driver_enabled = true
+  }
+
   identity {
     type = "SystemAssigned"
   }
