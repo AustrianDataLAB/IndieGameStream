@@ -33,7 +33,7 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
 
   azure_active_directory_role_based_access_control {
     managed = true
-    azure_rbac_enabled = false
+    azure_rbac_enabled = true
     admin_group_object_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
   }
 
