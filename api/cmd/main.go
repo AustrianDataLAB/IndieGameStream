@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func setupRouter(db *sql.DB, azClient *azblob.Client) *gin.Engine {
@@ -112,19 +113,27 @@ func getKubeConfig() armcontainerservice.ManagedClustersClientListClusterUserCre
 }
 
 func k8sClient() client.Client {
-	kubeConfig := getKubeConfig()
-	if len(kubeConfig.Kubeconfigs) == 0 {
-		log.Fatalf("The kubeconfig request was successful but it's response body is empty")
-	}
-	if len(kubeConfig.Kubeconfigs) > 1 {
-		log.Println("WARNING: Multiple kube-config's have been found. The first one will be used.")
-	}
+	//Try to read k8s config directly from environment
+	restConfig, err := config.GetConfig()
+	if err != nil || restConfig == nil {
+		//If it fails, try to get it from azure
+		kubeConfig := getKubeConfig()
+		if len(kubeConfig.Kubeconfigs) == 0 {
+			log.Fatalf("The kubeconfig request was successful but it's response body is empty")
+		}
+		if len(kubeConfig.Kubeconfigs) > 1 {
+			log.Println("WARNING: Multiple kube-config's have been found. The first one will be used.")
+		}
 
-	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeConfig.Kubeconfigs[0].Value)
-	if err != nil {
-		log.Fatalf("failed to load kube config: %v", err)
+		clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeConfig.Kubeconfigs[0].Value)
+		if err != nil {
+			log.Fatalf("failed to create client config: %v", err)
+		}
+		restConfig, err = clientConfig.ClientConfig()
+		if err != nil {
+			log.Fatalf("failed to load kube config: %v", err)
+		}
 	}
-	restConfig, err := clientConfig.ClientConfig()
 
 	k8sc, err := client.New(
 		restConfig,
