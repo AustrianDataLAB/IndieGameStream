@@ -28,8 +28,13 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   }
 
   identity {
-    type = "UserAssigned"
-    identity_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
+    type = "SystemAssigned"
+  }
+
+  azure_active_directory_role_based_access_control {
+    managed = true
+    azure_rbac_enabled = false
+    admin_group_object_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
   }
 
   private_cluster_enabled = true
