@@ -3,6 +3,10 @@ image:
   label: localenv
   pullPolicy: Never
 
+service:
+  spec:
+    loadBalancerClass: null
+
 env:
   ginMode: debug
   mysqlRootPassword: root

@@ -7,6 +7,10 @@ image:
   label: v1.0.0 # Change to proper version tag
   pullPolicy: IfNotPresent
 
+service:
+  spec:
+    loadBalancerClass: tailscale
+
 webRootDirectory: /usr/share/nginx/html
 
 appConfig:

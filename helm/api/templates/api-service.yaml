@@ -5,8 +5,13 @@ metadata:
   namespace: {{ .Values.appName }}
   labels:
     app: {{ .Values.appName }}
+  annotations:
+    tailscale.com/hostname: "api"
 spec:
   type: LoadBalancer
+  {{ if .Values.service.spec.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.service.spec.loadBalancerClass }}
+  {{ end }}
   selector:
     app: {{ .Values.appName }}
   ports:

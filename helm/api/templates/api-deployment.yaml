@@ -31,8 +31,24 @@ spec:
         - name: MYSQL_ROOT_USER
           value: {{ .Values.env.mysqlRootUser | quote }}
         - name: MYSQL_ROOT_PASSWORD
-          value: {{ .Values.env.mysqlRootPassword | quote }}
+          value: {{ required ".Values.env.mysqlRootPassword is required." .Values.env.mysqlRootPassword | quote }}
         - name: MYSQL_HOST
           value: {{ .Values.env.mysqlHost | quote }}
         - name: MYSQL_PORT
           value: {{ .Values.env.mysqlPort | quote }}
+        - name: AZURE_TENANT_ID
+          value: {{ required ".Values.env.azureTenantId is required." .Values.env.azureTenantId | quote }}
+        - name: AZURE_CLIENT_ID
+          value: {{ required ".Values.env.azureClientId is required." .Values.env.azureClientId | quote }}
+        - name: AZURE_CLIENT_SECRET
+          value: {{ required ".Values.env.azureClientSecret is required." .Values.env.azureClientSecret | quote }}
+        - name: AZURE_STORAGE_ACCOUNT
+          value: {{ required ".Values.env.azureStorageAccount is required." .Values.env.azureStorageAccount | quote }}
+        - name: AZURE_CONTAINER_NAME
+          value: {{ required ".Values.env.azureContainerName is required." .Values.env.azureContainerName | quote }}
+        - name: AZURE_AKS_CLUSTER_NAME
+          value: {{ required ".Values.env.azureAksClusterName is required." .Values.env.azureAksClusterName | quote }}
+        - name: AZURERM_SUBSCRIPTION_ID
+          value: {{ required ".Values.env.azurermSubscriptionId is required." .Values.env.azurermSubscriptionId | quote }}
+        - name: AZURERM_RESOURCE_GROUP_NAME
+          value: {{ required ".Values.env.azurermResourceGroupName is required." .Values.env.azurermResourceGroupName | quote }}
