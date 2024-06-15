@@ -122,14 +122,14 @@ jobs:
         run: |
           helm install -f values.yaml \
             --set-string env.mysqlRootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-            --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }}
-            --set-string env.azureClientId=${{ secrets.CLIENT_ID }}
-            --set-string env.azureClientSecret=${{ secrets.CLIENT_SECRET }}
-            --set-string env.azureStorageAccount=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}
-            --set-string env.azureContainerName=${{ secrets.AZURERM_CONTAINER_NAME }}
-            --set-string env.azureAksClusterName=${{ secrets.AZURERM_AKS_CLUSTER_NAME }}
-            --set-string env.azurermSubscriptionId=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
-            --set-string env.azurermResourceGroupName=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}
+            --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }} \
+            --set-string env.azureClientId=${{ secrets.CLIENT_ID }} \
+            --set-string env.azureClientSecret=${{ secrets.CLIENT_SECRET }} \
+            --set-string env.azureStorageAccount=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }} \
+            --set-string env.azureContainerName=${{ secrets.AZURERM_CONTAINER_NAME }} \
+            --set-string env.azureAksClusterName=${{ secrets.AZURERM_AKS_CLUSTER_NAME }} \
+            --set-string env.azurermSubscriptionId=${{ secrets.AZURERM_SUBSCRIPTION_ID }} \
+            --set-string env.azurermResourceGroupName=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }} \
             --set-string image.label=${{ github.event.inputs.label }} \
             api .
 
