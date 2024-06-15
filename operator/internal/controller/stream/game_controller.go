@@ -565,7 +565,10 @@ func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespa
 		if len(svc.Status.LoadBalancer.Ingress) > 0 {
 			ip = svc.Status.LoadBalancer.Ingress[0].IP
 			if ip != "" {
-				return true, nil
+				ip = svc.Status.LoadBalancer.Ingress[1].IP
+				if ip != "" {
+					return true, nil
+				}
 			}
 			if len(svc.Status.LoadBalancer.Ingress) > 1 {
 				ip = svc.Status.LoadBalancer.Ingress[1].IP
