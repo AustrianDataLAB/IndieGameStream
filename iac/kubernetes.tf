@@ -37,6 +37,8 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
     admin_group_object_ids = [var.myuser, "7ab666bb-6355-4240-aa93-16bfbb9fd5f7"]
   }
 
+  role_based_access_control_enabled = true
+
   private_cluster_enabled = true
 }
 
