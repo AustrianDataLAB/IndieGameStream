@@ -10,6 +10,8 @@ data "azurerm_resource_group" "rgruntime" {
 
 }
 
+data "github_ip_ranges" "ranges" {}
+
 ################################################################
 # IF you are generating any secrets, you need to put them somewhere
 # most ideally, you put them into a keyvault of the same lifecycle-stage as the asset the key belongs to
