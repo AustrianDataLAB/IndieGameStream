@@ -10,7 +10,7 @@ data "azurerm_resource_group" "rgruntime" {
 
 }
 
-data "github_ip_ranges" "github_ip_ranges" {}
+data "github_ip_ranges" "ranges" {}
 
 ################################################################
 # IF you are generating any secrets, you need to put them somewhere
