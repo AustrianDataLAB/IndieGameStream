@@ -49,7 +49,7 @@ resource "azurerm_storage_account" "staindiegamestream" {
   is_hns_enabled                  = true
 
   network_rules {
-    default_action                = Deny
+    default_action                = "Deny"
     ip_rules                      = ["0.0.0.0/0" ]
     bypass                        = "AzureServices"
   }
