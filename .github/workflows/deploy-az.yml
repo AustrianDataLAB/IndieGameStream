@@ -12,7 +12,7 @@ env:
   REGISTRY: ghcr.io
   NAMESPACE: austriandatalab
   SUB_NAMESPACE: indiegamestream
-  LABEL: sha-f641ffb9ebff0a3f8c8f9b968bfd50f83a316370
+  LABEL: sha-350add069a4899d95e950578b37b43e2fd092fd2
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -59,8 +59,7 @@ jobs:
       - name: Apply tailscale operator
         working-directory: ./iac
         run: |
-          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm uninstall tailscale-operator --namespace=tailscale || true"
-          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --namespace=tailscale --create-namespace --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait"
+          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator tailscale/tailscale-operator --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait || true"
       - name: Connect to tailscale
         uses: tailscale/github-action@v2
         with:
@@ -79,14 +78,22 @@ jobs:
           helm repo add mysql-operator https://mysql.github.io/mysql-operator/
           helm repo update
           helm install mysql-operator mysql-operator/mysql-operator --version "2.1.3" --wait \
-            --create-namespace --namespace=mysql-operator
+            --create-namespace --namespace=mysql-operator  || true
           helm install mysql mysql-operator/mysql-innodbcluster --version "2.1.3" --wait \
             --create-namespace --namespace=mysql -f values.yaml \
-            --set-string credentials.root.password=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            --set-string credentials.root.password=${{ secrets.MYSQL_ROOT_PASSWORD }} || true
+
+      - name: Install Open Policy Gatekeeper
+        working-directory: ./scripts/opa
+        run: |
+          helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+          helm repo update
+          helm install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace --wait || true
+          kubectl apply -f loadbalancerclass_mutator.yaml
 
       - name: Install stunner
         working-directory: ./scripts/localenv
-        run: make install_stunner
+        run: make install_stunner || true
 
       - name: Install game operator manifests
         working-directory: ./operator
@@ -185,9 +192,9 @@ jobs:
           export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
           terraform init
           terraform plan -out=tfplan.bin -input=false
-          terraform destroy -auto-approve
-          terraform destroy -auto-approve 
-          terraform destroy -auto-approve
+          terraform destroy -auto-approve || true
+          terraform destroy -auto-approve || true
+          terraform destroy -auto-approve || true
 
       - name: Logout of Azure
         run: az logout
