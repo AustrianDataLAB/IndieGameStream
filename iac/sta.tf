@@ -21,8 +21,8 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
 
 resource "azapi_resource" "gamesContainer" {
-  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01"
-  name      = "mycontainer"
+  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01"
+  name      = "games"
   parent_id = "${azurerm_storage_account.staindiegamestream.id}/blobServices/default"
   body = jsonencode({
     properties = {
@@ -36,16 +36,5 @@ resource "azapi_resource" "gamesContainer" {
   })
   depends_on = [
     azurerm_storage_account.staindiegamestream
-  ]
-}
-
-resource "azurerm_storage_account_network_rules" "netrules" {
-  storage_account_id = azurerm_storage_account.staindiegamestream.id
-
-  default_action = "Deny"
-  bypass = ["AzureServices"]
-
-  depends_on = [
-    azurerm_storage_container.gamesContainer,
   ]
 }
