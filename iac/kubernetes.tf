@@ -46,7 +46,7 @@ resource "azurerm_storage_account" "staindiegamestream" {
   public_network_access_enabled   = false
 
   nfsv3_enabled                   = true
-
+  is_hns_enabled                  = true
 }
 
 resource "azurerm_storage_container" "gamesContainer" {
