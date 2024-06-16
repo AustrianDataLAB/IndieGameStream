@@ -17,6 +17,7 @@ on:
       label:
         type: string
         description: Image label to use
+        default: 'develop'
 
 env:
   REGISTRY: ghcr.io
