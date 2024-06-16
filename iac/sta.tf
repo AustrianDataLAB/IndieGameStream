@@ -33,3 +33,9 @@ resource "azapi_resource" "gamesContainer" {
     azurerm_storage_account.staindiegamestream
   ]
 }
+
+resource "azurerm_role_assignment" "role_assignment" {
+  scope                  = azurerm_storage_account.staindiegamestream.id
+  role_definition_name   = "Storage Blob Data Contributor"
+  principal_id           = data.azurerm_client_config.current.object_id
+}
