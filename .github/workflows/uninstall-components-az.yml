@@ -54,38 +54,38 @@ jobs:
 
       - name: Uninstall MySQL
         working-directory: ./helm/mysql
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'mysql') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'mysql')) }}
         run: |
           helm uninstall mysql -n mysql
           helm uninstall mysql-operator -n mysql-operator
 
       - name: Uninstall STUNner
         working-directory: ./helm/stunner
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'stunner') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'stunner')) }}
         run: helm uninstall stunner -n stunner
 
       - name: Uninstall game operator manifests
         working-directory: ./operator
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator')) }}
         run: make uninstall
 
       - name: Undeploy game operator
         working-directory: ./operator
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator')) }}
         run: make undeploy
 
       - name: Uninstall API
         working-directory: ./helm/api
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api')) }}
         run: helm uninstall api
 
       - name: Uninstall frontend
         working-directory: ./helm/frontend
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend')) }}
         run: helm uninstall frontend
 
       - name: Uninstall Grafana
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana') }}
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana')) }}
         run: helm uninstall grafana -n monitoring
 
       - name: Logout of Azure
