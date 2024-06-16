@@ -56,8 +56,8 @@ jobs:
         working-directory: ./helm/mysql
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'mysql')) }}
         run: |
-          helm uninstall mysql -n mysql
-          helm uninstall mysql-operator -n mysql-operator
+          helm uninstall mysql -n mysql --wait
+          helm uninstall mysql-operator -n mysql-operator --wait
 
       - name: Uninstall STUNner
         working-directory: ./helm/stunner
