@@ -26,7 +26,6 @@ resource "azapi_resource" "gamesContainer" {
   parent_id = "${azurerm_storage_account.staindiegamestream.id}/blobServices/default"
   body = jsonencode({
     properties = {
-      defaultEncryptionScope      = "$account-encryption-key"
       denyEncryptionScopeOverride = false
       enableNfsV3AllSquash        = false
       enableNfsV3RootSquash       = false
