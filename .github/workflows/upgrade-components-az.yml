@@ -57,6 +57,11 @@ jobs:
       - name: Configure kubernetes config
         run: tailscale configure kubeconfig tailscale-operator
 
+      - name: Undeploy game operator
+        working-directory: ./operator
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        run: make undeploy
+
       - name: Install game operator manifests
         working-directory: ./operator
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
@@ -66,11 +71,6 @@ jobs:
         working-directory: ./operator
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
         run: make deploy IMG=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/operator:${{ github.event.inputs.label }}
-
-      - name: Undeploy game operator
-        working-directory: ./operator
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
-        run: make undeploy
 
       - name: Wait for MySQL to be ready
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
