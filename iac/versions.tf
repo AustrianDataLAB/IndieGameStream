@@ -13,10 +13,6 @@ terraform {
       source = "hashicorp/tls"
       version = "4.0.4"
     }
-    azapi = {
-      source = "Azure/azapi"
-      version = "1.13.1"
-    }
   }
   required_version = ">= 0.13"
 }
