@@ -17,6 +17,7 @@ on:
       label:
         type: string
         description: Image label to use
+        default: 'develop'
 
 env:
   REGISTRY: ghcr.io
@@ -56,6 +57,11 @@ jobs:
       - name: Configure kubernetes config
         run: tailscale configure kubeconfig tailscale-operator
 
+      - name: Undeploy game operator
+        working-directory: ./operator
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        run: make undeploy
+
       - name: Install game operator manifests
         working-directory: ./operator
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
@@ -65,11 +71,6 @@ jobs:
         working-directory: ./operator
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
         run: make deploy IMG=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/operator:${{ github.event.inputs.label }}
-
-      - name: Undeploy game operator
-        working-directory: ./operator
-        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
-        run: make undeploy
 
       - name: Wait for MySQL to be ready
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
@@ -102,14 +103,14 @@ jobs:
         working-directory: ./helm/api
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
         run: |
-          helm upgrade -f values.yaml \
+          helm upgrade --reuse-values \
             --set-string image.label=${{ github.event.inputs.label }} \
             api .
 
       - name: Wait for external IP of API
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
-          until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
+          until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" ]; do
             sleep 5
           done
 
@@ -117,8 +118,8 @@ jobs:
         working-directory: ./helm/frontend
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
-          helm upgrade -f values.yaml \
-            --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
+          helm upgrade --reuse-values \
+            --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
             --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
 

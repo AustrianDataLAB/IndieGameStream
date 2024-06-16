@@ -20,6 +20,7 @@ on:
       label:
         type: string
         description: Image label to use
+        default: 'develop'
 
 env:
   REGISTRY: ghcr.io
@@ -88,7 +89,7 @@ jobs:
         run: |
           helm repo add stunner https://l7mp.io/stunner
           helm repo update
-          helm dependency . --skip-refresh
+          helm dependency build . --skip-refresh
           helm install stunner . --create-namespace --namespace=stunner
 
       - name: Install game operator manifests
@@ -148,7 +149,7 @@ jobs:
       - name: Wait for external IP of API
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
-          until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
+          until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" ]; do
             sleep 5
           done
 
@@ -157,7 +158,7 @@ jobs:
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
           helm install -f values.yaml \
-            --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
+            --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
             --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
 
