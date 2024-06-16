@@ -27,10 +27,12 @@ resource "azapi_resource" "gamesContainer" {
   body = jsonencode({
     properties = {
       denyEncryptionScopeOverride = false
-      enableNfsV3AllSquash        = false
-      enableNfsV3RootSquash       = false
-      metadata                    = {}
-      publicAccess                = "None"
+      enableNfsV3AllSquash = false
+      enableNfsV3RootSquash = false
+      immutableStorageWithVersioning = {
+        enabled = false
+      }
+      publicAccess = "None"
     }
   })
   depends_on = [
