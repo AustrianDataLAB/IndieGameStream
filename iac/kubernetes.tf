@@ -50,15 +50,9 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
   network_rules {
     default_action                = "Deny"
-    ip_rules                      = [for github_cidr in data.github_ip_ranges.ranges.actions_ipv4: github_cidr]
+    ip_rules                      = ["0.0.0.0/0"]
     bypass                        = ["AzureServices"] 
   }
-}
-
-resource "azurerm_storage_container" "gamesContainer" {
-  name                      = "games"
-  storage_account_name      = azurerm_storage_account.staindiegamestream.name
-  container_access_type     = "blob"
 }
 
 /*
