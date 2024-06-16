@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "staindiegamestream" {
   account_replication_type        = "LRS"
   account_kind                    = "StorageV2"
 
-  public_network_access_enabled   = falseq
+  public_network_access_enabled   = false
 
   nfsv3_enabled                   = true
   is_hns_enabled                  = true
