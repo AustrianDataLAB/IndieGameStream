@@ -34,6 +34,27 @@ resource "azurerm_kubernetes_cluster" "testCluster" {
   private_cluster_enabled = true
 }
 
+resource "azurerm_storage_account" "staindiegamestream" {
+  name                            = "staindiegamestream"
+  resource_group_name             = data.azurerm_resource_group.rgruntime.name
+  location                        = data.azurerm_resource_group.rgruntime.location
+  
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  account_kind                    = "BlobStorage"
+
+  public_network_access_enabled   = false
+
+  nfsv3_enabled                   = true
+
+}
+
+resource "azurerm_storage_container" "gamesContainer" {
+  name                      = "games"
+  storage_account_name      = data.azurerm_storage_account.staindiegamestream.name
+  container_access_type     = "blob"
+}
+
 /*
 output "client_certificate" {
   value = azurerm_kubernetes_cluster.testCluster.kube_config.0.client_certificate
