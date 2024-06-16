@@ -56,8 +56,8 @@ jobs:
         working-directory: ./helm/mysql
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'mysql')) }}
         run: |
-          helm uninstall mysql -n mysql --wait
-          helm uninstall mysql-operator -n mysql-operator --wait
+          helm uninstall mysql -n mysql --ignore-not-found --wait
+          helm uninstall mysql-operator -n mysql-operator --ignore-not-found --wait
           kubectl delete ns mysql
           kubectl delete ns mysql-operator
 
@@ -65,7 +65,7 @@ jobs:
         working-directory: ./helm/stunner
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'stunner')) }}
         run: |
-          helm uninstall stunner -n stunner --wait
+          helm uninstall stunner -n stunner --ignore-not-found --wait
           kubectl delete ns stunner
 
       #- name: Uninstall game operator manifests
@@ -91,7 +91,7 @@ jobs:
       - name: Uninstall Grafana
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana')) }}
         run: | 
-          helm uninstall grafana -n monitoring --wait
+          helm uninstall grafana -n monitoring --ignore-not-found  --wait
           kubectl delete ns monitoring
 
       - name: Logout of Azure
