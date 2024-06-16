@@ -11,12 +11,32 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
   nfsv3_enabled                   = true
   is_hns_enabled                  = true
+
+  network_rules {
+    default_action = "Deny"
+    ip_rules = ["0.0.0.0/0"]
+    bypass = ["AzureServices"]
+  }
 }
 
-resource "azurerm_storage_container" "gamesContainer" {
-  name                      = "games"
-  storage_account_name      = azurerm_storage_account.staindiegamestream.name
-  container_access_type     = "blob"
+
+resource "azapi_resource" "gamesContainer" {
+  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01"
+  name      = "mycontainer"
+  parent_id = "${azurerm_storage_account.staindiegamestream.id}/blobServices/default"
+  body = jsonencode({
+    properties = {
+      defaultEncryptionScope      = "$account-encryption-key"
+      denyEncryptionScopeOverride = false
+      enableNfsV3AllSquash        = false
+      enableNfsV3RootSquash       = false
+      metadata                    = {}
+      publicAccess                = "None"
+    }
+  })
+  depends_on = [
+    azurerm_storage_account.staindiegamestream
+  ]
 }
 
 resource "azurerm_storage_account_network_rules" "netrules" {
