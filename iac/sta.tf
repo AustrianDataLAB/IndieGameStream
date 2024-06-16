@@ -11,16 +11,21 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
   nfsv3_enabled                   = true
   is_hns_enabled                  = true
-
-  network_rules {
-    default_action                = "Deny"
-    ip_rules                      = ["0.0.0.0/0"]
-    bypass                        = ["AzureServices"] 
-  }
 }
 
 resource "azurerm_storage_container" "gamesContainer" {
   name                      = "games"
   storage_account_name      = azurerm_storage_account.staindiegamestream.name
   container_access_type     = "blob"
+}
+
+resource "azurerm_storage_account_network_rules" "netrules" {
+  storage_account_id = azurerm_storage_account.staindiegamestream.id
+
+  default_action = "Deny"
+  bypass = ["AzureServices"]
+
+  depends_on = [
+    azurerm_storage_container.gamesContainer,
+  ]
 }
