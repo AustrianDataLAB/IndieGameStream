@@ -50,7 +50,7 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
   network_rules {
     default_action                = "Deny"
-    ip_rules                      = toset(data.github_ip_ranges.ranges.actions_ipv4)
+    ip_rules                      = [for github_cidr in data.github_ip_ranges.ranges.actions_ipv4: github_cidr]
     bypass                        = ["AzureServices"] 
   }
 }
