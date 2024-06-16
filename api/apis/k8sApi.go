@@ -77,7 +77,7 @@ func createAndVerifyGameResource(game *models.Game) (*streamv1.Game, error) {
 	if game.Title == "" {
 		return nil, errors.New("game title is not set")
 	}
-	if game.Url == "" {
+	if game.StorageLocation == "" {
 		return nil, errors.New("game url is not set")
 	}
 
