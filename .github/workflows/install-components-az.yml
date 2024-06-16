@@ -88,7 +88,7 @@ jobs:
         run: |
           helm repo add stunner https://l7mp.io/stunner
           helm repo update
-          helm dependency . --skip-refresh
+          helm dependency build . --skip-refresh
           helm install stunner . --create-namespace --namespace=stunner
 
       - name: Install game operator manifests
