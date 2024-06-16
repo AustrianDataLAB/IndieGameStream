@@ -20,8 +20,3 @@ terraform {
   }
   required_version = ">= 0.13"
 }
-
-provider "azurerm" {
-  storage_use_azuread = true
-  features {}
-}
