@@ -51,7 +51,7 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
 resource "azurerm_storage_container" "gamesContainer" {
   name                      = "games"
-  storage_account_name      = data.azurerm_storage_account.staindiegamestream.name
+  storage_account_name      = azurerm_storage_account.staindiegamestream.name
   container_access_type     = "blob"
 }
 
