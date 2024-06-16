@@ -8,6 +8,7 @@ import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideOAuthClient } from "angular-oauth2-oidc";
 import { AuthInitializer } from "./services/auth.initializer";
 import { AuthInterceptor } from "./services/authInterceptor.service";
+import {AuthGuard} from "./guards/auth.guard";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,5 +21,7 @@ export const appConfig: ApplicationConfig = {
       useFactory: (authInitializer: AuthInitializer) => () =>
         authInitializer.initializeApp(),
       deps: [AuthInitializer],
-      multi: true, },]
+      multi: true, },
+    AuthGuard,
+  ]
 };

@@ -28,7 +28,7 @@ export class AuthInitializer {
       };
       this.oauthService.configure(authConfig);
       this.oauthService.setupAutomaticSilentRefresh();
-      this.oauthService.loadDiscoveryDocumentAndLogin().then(() => {
+      this.oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
         /*
         if (this.oauthService.hasValidIdToken() && this.oauthService.hasValidAccessToken()) {
           const url = decodeURIComponent(<string>this.oauthService.state);

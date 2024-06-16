@@ -20,6 +20,9 @@ export class AuthService {
 
   getPictureUrl(): string {
     const claims = this.oAuthService.getIdentityClaims();
+    if (claims === null)  {
+      return '';
+    }
     return claims['picture'];
   }
 
@@ -39,6 +42,6 @@ export class AuthService {
   }
 
   logout() {
-    this.oAuthService.logOut();
+    this.oAuthService.revokeTokenAndLogout();
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
-import { Games, Game } from '../modules/games';
-import { Observable } from "rxjs";
+import { Game } from '../modules/games';
+import {map, Observable, tap} from "rxjs";
 import { AppConfigService } from "./app-config.service";
 import { AuthService} from "./auth.service";
 import {FormGroup} from "@angular/forms";
@@ -15,17 +15,18 @@ export class GamesService {
     console.log(this.configService.getConfig())
   }
 
-  getGames(): Observable<Games> {
+  getGames(): Observable<Game[]> {
     const httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
       }),
     };
-    return this.http.get<Games>(this.apiUrl + "/games");
+    return this.http.get<Game[]>(this.apiUrl + "/games");
   }
 
+  // returns undefined when game not found
   getGame(id: string): Observable<Game> {
-    return this.http.get<Game>(this.apiUrl + "/games/" + id)
+    return this.http.get<Game>(this.apiUrl + "/games/" + id);
   }
 
   deleteGame(id: string): void {
