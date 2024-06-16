@@ -3,11 +3,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBar } from "@angular/material/progress-bar";
 import { MatIcon } from "@angular/material/icon";
 import { HttpClientModule, HttpEventType } from "@angular/common/http";
-import {finalize, Subscription} from "rxjs";
-import {NgIf} from "@angular/common";
-import {GamesService} from "../../services/games.service";
-import {MatFormField, MatHint, MatInput, MatLabel, MatSuffix} from "@angular/material/input";
-import {FormBuilder, ReactiveFormsModule, Validators} from "@angular/forms";
+import { catchError, EMPTY, finalize, Subscription } from "rxjs";
+import { NgIf } from "@angular/common";
+import { GamesService } from "../../services/games.service";
+import { MatFormField, MatHint, MatInput, MatLabel, MatSuffix } from "@angular/material/input";
+import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 
 @Component({
   selector: 'app-game-upload',
@@ -32,10 +32,10 @@ export class GameUploadComponent {
 
   uploadProgress: number = 0;
   uploadSub: Subscription = new Subscription();
-  file_store: FileList = new DataTransfer().files;
   gameForm = this.fb.group({
     title: ['', Validators.required],
-    filename: ['', Validators.required]
+    filename: ['', Validators.required],
+    file: [new DataTransfer().files, Validators.required]
   });
 
   constructor(private gamesService: GamesService, private fb: FormBuilder) {}
@@ -43,22 +43,28 @@ export class GameUploadComponent {
   onFileSelected(event: any) {
     const file:File = event.target.files[0];
     if (file) {
-      this.file_store = event.target.files;
       this.gameForm.patchValue({ filename: file.name});
+      this.gameForm.patchValue({ file: event.target.files});
     }
   }
 
   onUpload() {
-    const upload$ = this.gamesService.uploadGame(this.file_store[0])
-      .pipe(
-        finalize(() => this.reset())
-      );
+    if (this.gameForm.valid) {
+      const upload$ = this.gamesService.uploadGame(this.gameForm)
+        .pipe(
+          catchError((error) => {
+            console.error('An error occured during upload', error);
+            return EMPTY;
+          }),
+          finalize(() => this.reset())
+        );
 
-    this.uploadSub = upload$.subscribe(event => {
-      if (event.type == HttpEventType.UploadProgress && event.total !== undefined) {
-        this.uploadProgress = Math.round(100 * (event.loaded / event.total));
-      }
-    })
+      this.uploadSub = upload$.subscribe(event => {
+        if (event.type == HttpEventType.UploadProgress && event.total !== undefined) {
+          this.uploadProgress = Math.round(100 * (event.loaded / event.total));
+        }
+      })
+    }
   }
 
   reset() {
@@ -66,6 +72,5 @@ export class GameUploadComponent {
     this.uploadSub.unsubscribe();
     this.uploadSub = new Subscription();
     this.gameForm.reset();
-    this.file_store = new DataTransfer().files;
   }
 }

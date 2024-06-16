@@ -47,6 +47,10 @@ type GameReconciler struct {
 //+kubebuilder:rbac:groups=stream.indiegamestream.com,resources=games/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=stream.indiegamestream.com,resources=games/finalizers,verbs=update
 //+kubebuilder:rbac:groups=stunner.l7mp.io,resources=udproutes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=stunner.l7mp.io,resources=gatewayconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -497,13 +501,17 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 }
 
 func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
+
+	className := "tailscale"
+
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: game.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": selector},
+			Selector:          map[string]string{"app": selector},
+			LoadBalancerClass: &className,
 			Ports: []corev1.ServicePort{
 				{
 					Port:       port,
@@ -558,6 +566,12 @@ func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespa
 			ip = svc.Status.LoadBalancer.Ingress[0].IP
 			if ip != "" {
 				return true, nil
+			}
+			if len(svc.Status.LoadBalancer.Ingress) > 1 {
+				ip = svc.Status.LoadBalancer.Ingress[1].IP
+				if ip != "" {
+					return true, nil
+				}
 			}
 		}
 		return false, nil
