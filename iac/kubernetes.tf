@@ -47,6 +47,12 @@ resource "azurerm_storage_account" "staindiegamestream" {
 
   nfsv3_enabled                   = true
   is_hns_enabled                  = true
+
+  network_rules {
+    default_action                = Deny
+    ip_rules                      = ["0.0.0.0/0" ]
+    bypass                        = "AzureServices"
+  }
 }
 
 resource "azurerm_storage_container" "gamesContainer" {
