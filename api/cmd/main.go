@@ -15,7 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"k8s.io/client-go/kubernetes/scheme"
+	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net/http"
@@ -135,14 +137,36 @@ func k8sClient() client.Client {
 		}
 	}
 
+	scheme, err := createScheme()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	k8sc, err := client.New(
 		restConfig,
-		client.Options{Scheme: scheme.Scheme},
+		client.Options{Scheme: scheme},
 	)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	return k8sc
+}
+
+func createScheme() (*runtime.Scheme, error) {
+	scheme := runtime.NewScheme()
+	// register all built-in types
+	err := clientgoscheme.AddToScheme(scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	// register game scheme
+	err = streamv1.AddToScheme(scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	return scheme, nil
 }
 
 func CORSMiddleware() gin.HandlerFunc {
