@@ -1,0 +1,127 @@
+# Assumes that the component was already installed to the cluster and we only want to update the image version
+# MySQL and STUNner should already be installed when using this workflow
+name: Upgrade components on Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        type: choice
+        description: Which component
+        required: true
+        options:
+        - frontend
+        - api
+        - operator
+        - all
+      label:
+        type: string
+        description: Image label to use
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: austriandatalab
+  SUB_NAMESPACE: indiegamestream
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: 'latest'
+        id: install1
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+        id: install2
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{secrets.TAILSCALE_CLIENT_ID_2}}
+          oauth-secret: ${{secrets.TAILSCALE_CLIENT_SECRET_2}}
+          tags: tag:ci
+      
+      - name: Configure kubernetes config
+        run: tailscale configure kubeconfig tailscale-operator
+
+      - name: Install game operator manifests
+        working-directory: ./operator
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        run: make install
+
+      - name: Deploy game operator
+        working-directory: ./operator
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        run: make deploy IMG=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/operator:${{ github.event.inputs.label }}
+
+      - name: Undeploy game operator
+        working-directory: ./operator
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator') }}
+        run: make undeploy
+
+      - name: Wait for MySQL to be ready
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
+        run: |
+          while true; do
+            POD_STATUS=$(kubectl get pod mysql-0 -n mysql --no-headers -o custom-columns=":status.phase" 2>/dev/null);
+            if [ "$POD_STATUS" ]; then
+                echo "Pod mysql-0 has been created with status: $POD_STATUS";
+                break;
+            else
+                echo "Waiting for pod mysql-0 to be created...";
+                sleep 5;
+            fi
+          done
+          kubectl wait --for=condition=Ready pod/mysql-0 -n mysql --timeout=120s
+          
+          while true; do
+            POD_STATUS=$(kubectl get pod -l app.kubernetes.io/component=router -n mysql --no-headers -o custom-columns=":status.phase" 2>/dev/null); \
+            if [ "$POD_STATUS" ]; then
+                echo "MySQL router has been created with status: $POD_STATUS";
+                break;
+            else
+                echo "Waiting for MySQL router to be created...";
+                sleep 5;
+            fi
+          done
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=router -n mysql --timeout=120s
+
+      - name: Install API
+        working-directory: ./helm/api
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
+        run: |
+          helm upgrade -f values.yaml \
+            --set-string image.label=${{ github.event.inputs.label }} \
+            api .
+
+      - name: Wait for external IP of API
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
+        run: |
+          until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
+            sleep 5
+          done
+
+      - name: Install frontend
+        working-directory: ./helm/frontend
+        if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
+        run: |
+          helm upgrade -f values.yaml \
+            --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
+            --set-string image.label=${{ github.event.inputs.label }} \
+            frontend .
+
+      - name: Logout of Azure
+        if: always()
+        run: az logout

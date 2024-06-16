@@ -1,0 +1,93 @@
+name: Uninstall components from Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        type: choice
+        description: Which component
+        required: true
+        options:
+        - frontend
+        - api
+        - api-mysql
+        - operator
+        - operator-stunner
+        - stunner
+        - mysql
+        - grafana
+        - all
+
+jobs:
+  uninstall:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: 'latest'
+        id: install1
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+        id: install2
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{secrets.TAILSCALE_CLIENT_ID_2}}
+          oauth-secret: ${{secrets.TAILSCALE_CLIENT_SECRET_2}}
+          tags: tag:ci
+      
+      - name: Configure kubernetes config
+        run: tailscale configure kubeconfig tailscale-operator
+
+      - name: Uninstall MySQL
+        working-directory: ./helm/mysql
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'mysql')) }}
+        run: |
+          helm uninstall mysql -n mysql
+          helm uninstall mysql-operator -n mysql-operator
+
+      - name: Uninstall STUNner
+        working-directory: ./helm/stunner
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'stunner')) }}
+        run: helm uninstall stunner -n stunner
+
+      - name: Uninstall game operator manifests
+        working-directory: ./operator
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator')) }}
+        run: make uninstall
+
+      - name: Undeploy game operator
+        working-directory: ./operator
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator')) }}
+        run: make undeploy
+
+      - name: Uninstall API
+        working-directory: ./helm/api
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api')) }}
+        run: helm uninstall api
+
+      - name: Uninstall frontend
+        working-directory: ./helm/frontend
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend')) }}
+        run: helm uninstall frontend
+
+      - name: Uninstall Grafana
+        if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana')) }}
+        run: helm uninstall grafana -n monitoring
+
+      - name: Logout of Azure
+        if: always()
+        run: az logout
