@@ -103,7 +103,7 @@ jobs:
         working-directory: ./helm/api
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'api') }}
         run: |
-          helm upgrade -f values.yaml \
+          helm upgrade --reuse-values \
             --set-string image.label=${{ github.event.inputs.label }} \
             api .
 
@@ -118,7 +118,7 @@ jobs:
         working-directory: ./helm/frontend
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'frontend') }}
         run: |
-          helm upgrade -f values.yaml \
+          helm upgrade --reuse-values \
             --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
             --set-string image.label=${{ github.event.inputs.label }} \
             frontend .
