@@ -88,7 +88,7 @@ func createAndVerifyGameResource(game *models.Game) (*streamv1.Game, error) {
 		},
 		Spec: streamv1.GameSpec{
 			Name:          game.Title,
-			ExecutableURL: game.Url,
+			ExecutableURL: game.StorageLocation,
 		},
 	}, nil
 }
