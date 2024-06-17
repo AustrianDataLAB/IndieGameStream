@@ -196,7 +196,13 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// Note that Status is a subresource, so changes to it are ignored by the cache, hence the need to update it manually
 	//game.Status.Nodes = nodes
 	//game.Status.Phase = phase
-	game.Status.URL = fmt.Sprintf("http://%s:8000", coordIP)
+	outsidehostname, err := waitForLoadBalancerHostname(ctx, r.Client, game.Namespace, coordinatorName)
+	if err != nil {
+		log.Error(err, "unable to get LoadBalancer Hostname for Coordinator")
+		return ctrl.Result{}, err
+	}
+
+	game.Status.URL = fmt.Sprintf("http://%s", outsidehostname)
 	//TODO: Add nginx ingress url to status
 	if err := r.Status().Update(ctx, game); err != nil {
 		log.Error(err, "unable to update Game status")
@@ -479,7 +485,7 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 								},
 								{
 									Name:  "CLOUD_GAME_WORKER_NETWORK_COORDINATORADDRESS",
-									Value: fmt.Sprintf("%s:8000", coordIP),
+									Value: fmt.Sprintf("%s:80", coordIP),
 								},
 								{
 									Name:  "CLOUD_GAME_WORKER_NETWORK_PUBLICADDRESS",
@@ -503,18 +509,26 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
 
 	className := "tailscale"
+	annotation := fmt.Sprintf("%s-%s", game.Spec.Name, game.Name)
+	annotations := map[string]string{}
+	outsidePort := port
+	if selector == "coordinator" {
+		annotations["tailscale.com/hostname"] = annotation
+		outsidePort = 80
+	}
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: game.Namespace,
+			Name:        name,
+			Namespace:   game.Namespace,
+			Annotations: annotations,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:          map[string]string{"app": selector},
 			LoadBalancerClass: &className,
 			Ports: []corev1.ServicePort{
 				{
-					Port:       port,
+					Port:       outsidePort,
 					TargetPort: intstr.FromInt32(port),
 				},
 			},
@@ -573,12 +587,6 @@ func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespa
 					return true, nil
 				}
 			}
-			if len(svc.Status.LoadBalancer.Ingress) > 1 {
-				ip = svc.Status.LoadBalancer.Ingress[1].IP
-				if ip != "" {
-					return true, nil
-				}
-			}
 		}
 		return false, nil
 	})
@@ -587,6 +595,41 @@ func waitForLoadBalancerIP(ctx context.Context, k8sClient client.Client, namespa
 		return "", err
 	}
 	return ip, nil
+}
+
+func waitForLoadBalancerHostname(ctx context.Context, k8sClient client.Client, namespace, serviceName string) (string, error) {
+	var hostname string
+
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
+		svc := &corev1.Service{}
+		if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: serviceName}, svc); err != nil {
+			return false, err
+		}
+		if len(svc.Status.LoadBalancer.Ingress) > 0 {
+			hostname = svc.Status.LoadBalancer.Ingress[0].Hostname
+			if hostname != "" {
+				return true, nil
+			}
+			if len(svc.Status.LoadBalancer.Ingress) > 1 {
+				hostname = svc.Status.LoadBalancer.Ingress[1].Hostname
+				if hostname != "" {
+					return true, nil
+				}
+			}
+		}
+		return false, nil
+	})
+
+	//fallback on ip
+	if err != nil {
+		ip, err := waitForLoadBalancerIP(ctx, k8sClient, namespace, serviceName)
+		if err != nil {
+			return "", err
+		}
+		return ip, nil
+	}
+
+	return hostname, nil
 }
 
 var (
