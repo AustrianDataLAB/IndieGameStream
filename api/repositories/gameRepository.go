@@ -14,6 +14,8 @@ type IGameRepository interface {
 	FindAllByOwner(owner string) ([]models.Game, error)
 	ReadOwner(id uuid.UUID) (string, error)
 	IsExisting(id uuid.UUID) bool
+	Update(game *models.Game) error
+	Create(game *models.Game) error
 }
 
 type gameRepository struct {
@@ -76,27 +78,38 @@ func (g gameRepository) IsExisting(id uuid.UUID) bool {
 // Save will update the database entry if the game is already in the database.
 // If not it will create an uuid and save it in the database.
 func (g gameRepository) Save(game *models.Game) error {
-	if game.ID != uuid.Nil {
-		//Check if uuid is already in database
-		existing, err := g.FindByID(game.ID)
-		if err != nil {
-			return err
-		}
-
-		if existing != nil {
-			//If yes, update the existing entry
-			stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")
-			if err != nil {
-				return err
-			}
-
-			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID))
-		}
+	if game.ID == uuid.Nil || !g.IsExisting(game.ID) {
+		return g.Create(game)
 	} else {
+		return g.Update(game)
+	}
+}
+
+// Update updates an existing game. It doesn't check if the game is already existing or not.
+// If you are not sure that the game is already existing you should use Save.
+func (g gameRepository) Update(game *models.Game) error {
+	if game == nil {
+		return errors.New("cannot update game, game is nil")
+	}
+
+	stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")
+	if err != nil {
+		return err
+	}
+
+	return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID))
+}
+
+// Create inserts a new game to the games database
+func (g gameRepository) Create(game *models.Game) error {
+	if game == nil {
+		return errors.New("cannot create new game, game is nil")
+	}
+
+	if game.ID == uuid.Nil {
 		game.ID = uuid.New()
 	}
 
-	//If not create a new one
 	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		return err
