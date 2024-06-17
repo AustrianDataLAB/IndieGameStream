@@ -403,9 +403,9 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 					Containers: []corev1.Container{
 						{
 							Name:    "coordinator",
-							Image:   "valniae/snekyrepo:crdi",
-							Command: []string{"coordinator"},
-							Args:    []string{"--v=5"},
+							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:master",
+							Command: []string{"./coordinator"},
+							Args:    []string{""},
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8000,
@@ -417,7 +417,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 									Value: gatewayConfig.Spec.Password,
 								},
 								{
-									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_URL",
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_0_URLS",
 									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
 								},
 								{
@@ -429,7 +429,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 									Value: gatewayConfig.Spec.Password,
 								},
 								{
-									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_URL",
+									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_URLS",
 									Value: fmt.Sprintf("turn:%s:3478", gatewayIP),
 								},
 								{
@@ -452,6 +452,8 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 }
 
 func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, resourceName string, coordIP string, workerIP string) (*appsv1.Deployment, error) {
+	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", "test.gba")
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceName,
@@ -470,9 +472,9 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 					Containers: []corev1.Container{
 						{
 							Name:    "worker",
-							Image:   "valniae/snekyrepo:crdi",
-							Command: []string{"worker"},
-							Args:    []string{"--v=5"},
+							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:master",
+							Command: []string{"./worker"},
+							Args:    []string{""},
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8443,
@@ -491,7 +493,24 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 									Name:  "CLOUD_GAME_WORKER_NETWORK_PUBLICADDRESS",
 									Value: workerIP,
 								},
-							}, //TODO mount game executable and config game config file
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "gamestorage",
+									MountPath: fullpath,
+									SubPath:   "varooom-3d (1).gba",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "gamestorage",
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: "azure-blob-pvc",
+								},
+							},
 						},
 					},
 				},
