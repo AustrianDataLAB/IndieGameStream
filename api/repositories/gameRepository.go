@@ -3,6 +3,7 @@ package repositories
 import (
 	"api/models"
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -12,6 +13,7 @@ type IGameRepository interface {
 	Delete(id uuid.UUID) error
 	FindAllByOwner(owner string) ([]models.Game, error)
 	ReadOwner(id uuid.UUID) (string, error)
+	IsExisting(id uuid.UUID) bool
 }
 
 type gameRepository struct {
@@ -60,6 +62,15 @@ func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 		return nil, err
 	}
 	return &game, nil
+}
+
+// IsExisting will return true if no game with the given id has been found.
+func (g gameRepository) IsExisting(id uuid.UUID) bool {
+	var game models.Game
+	err := g.db.QueryRow("SELECT id FROM games WHERE ID = ?", id).
+		Scan(&game.ID)
+
+	return !errors.Is(err, sql.ErrNoRows)
 }
 
 // Save will update the database entry if the game is already in the database.
