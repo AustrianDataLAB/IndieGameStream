@@ -58,7 +58,7 @@ func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).
 		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
