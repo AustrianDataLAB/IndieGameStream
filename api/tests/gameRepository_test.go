@@ -130,7 +130,7 @@ func Test_Create_Game_With_Id_Should_Succeed(t *testing.T) {
 		Owner:           "MockOwner",
 	}
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnError(sql.ErrNoRows)
 
 	mock.ExpectPrepare("INSERT INTO games")
@@ -177,12 +177,9 @@ func Test_Save_Existing_Game_Should_Succeed(t *testing.T) {
 		Url:             "MockUrl",
 		Owner:           "MockOwner",
 	}
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
-		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(id, "", "", "", "", ""),
-	)
+	
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id FROM games WHERE ID = ?")).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"Id"}).AddRow(id))
 
 	mock.ExpectPrepare(regexp.
 		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?"))
