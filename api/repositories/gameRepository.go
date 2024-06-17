@@ -28,7 +28,7 @@ func GameRepository(db *sql.DB) IGameRepository {
 	}
 }
 
-// Read the owner of a specific game or empty if the game has not been found
+// ReadOwner Reads the owner of a specific game or empty if the game has not been found
 func (g gameRepository) ReadOwner(id uuid.UUID) (string, error) {
 	var owner string
 	err := g.db.QueryRow("SELECT Owner FROM games WHERE ID = ?", id).Scan(&owner)
@@ -38,7 +38,7 @@ func (g gameRepository) ReadOwner(id uuid.UUID) (string, error) {
 	return owner, nil
 }
 
-// FindAll returns all games of a specific owner from the database or (nil, err) if an error occurred.
+// FindAllByOwner returns all games of a specific owner from the database or (nil, err) if an error occurred.
 func (g gameRepository) FindAllByOwner(owner string) ([]models.Game, error) {
 	stmt, err := g.db.Prepare("SELECT * FROM games WHERE owner = ?")
 	if err != nil {
