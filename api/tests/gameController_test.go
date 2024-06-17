@@ -19,6 +19,56 @@ import (
 	"testing"
 )
 
+func Test_Read_By_Id_Should_Succeed(t *testing.T) {
+	//======================= PREPARE	PREPARE		PREPARE		PREPARE =======================
+	owner := "MockOwner"
+	// Create database mock
+	db, dbMock := databaseMock()
+	defer db.Close()
+	// Create Models
+	game := mocks.GameMock("A")
+	game.Owner = owner
+	// Define queries
+	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
+		WithArgs(game.ID).WillReturnRows(
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
+			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
+	)
+
+	// Finally, create gameController
+	gameController := gameController(db)
+	// Prepare Gin
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("subject", owner)
+
+	//======================= EXECUTE	EXECUTE		EXECUTE		EXECUTE =======================
+	c.Params = gin.Params{gin.Param{Key: "id", Value: game.ID.String()}}
+	gameController.GetGameById(c)
+
+	//======================= VERIFY	VERIFY		VERIFY		VERIFY =======================
+	//Check HTTP response
+	if w.Code != 200 {
+		b, _ := ioutil.ReadAll(w.Body)
+		t.Error(w.Code, string(b))
+	}
+
+	//Check response body
+	var responseBody dtos.GetAllGamesResponseBody
+	err := json.Unmarshal(w.Body.Bytes(), &responseBody)
+	if err != nil {
+		t.Error(err)
+	}
+	if &responseBody == nil {
+		t.Error("response body is empty")
+	}
+
+	//Verify games
+	verifyDto(t, &responseBody, game)
+
+}
+
 func Test_Read_All_Should_Succeed(t *testing.T) {
 	//======================= PREPARE	PREPARE		PREPARE		PREPARE =======================
 	owner := "MockOwner"
