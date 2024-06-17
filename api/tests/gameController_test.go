@@ -6,12 +6,12 @@ import (
 	"api/models"
 	"api/repositories"
 	"api/services"
+	"api/tests/mocks"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"net/http/httptest"
@@ -19,84 +19,73 @@ import (
 	"testing"
 )
 
-func Test_Read_Should_Succeed(t *testing.T) {
-	//==============Prepare=======================
+func Test_Read_All_Should_Succeed(t *testing.T) {
+	//======================= PREPARE	PREPARE		PREPARE		PREPARE =======================
+	owner := "MockOwner"
+	// Create database mock
 	db, dbMock := databaseMock()
 	defer db.Close()
-	prepare_sql_mock_for_Test_Read_Should_Succeed(dbMock)
-	gameController := gameController(db)
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("subject", "MockOwner")
-
-	//Execute
-	gameController.GetAllGames(c)
-
-	//Verify
-	if w.Code != 200 {
-		b, _ := ioutil.ReadAll(w.Body)
-		t.Error(w.Code, string(b))
-	}
-
-	games := []dtos.GetAllGamesResponseBody{}
-
-	err := json.Unmarshal(w.Body.Bytes(), &games)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(games) != 2 {
-		t.Error(fmt.Sprint("Expected 2 games, got ", len(games)))
-	}
-
-	if games[0].ID == uuid.Nil {
-		t.Error(fmt.Sprint("Expected non-nil game ID, got ", games[0].ID))
-	}
-	if games[1].ID == uuid.Nil {
-		t.Error(fmt.Sprint("Expected non-nil game ID, got ", games[1].ID))
-	}
-	if len(games[0].Url) == 0 {
-		t.Error(fmt.Sprint("Expected non-empty game URL, got ", games[0].Url))
-	}
-	if len(games[1].Url) == 0 {
-		t.Error(fmt.Sprint("Expected non-empty game URL, got ", games[1].Url))
-	}
-	if len(games[0].Title) == 0 {
-		t.Error(fmt.Sprint("Expected non-empty game title, got ", games[0].Title))
-	}
-	if len(games[1].Title) == 0 {
-		t.Error(fmt.Sprint("Expected non-empty game title, got ", games[1].Title))
-	}
-}
-
-func prepare_sql_mock_for_Test_Read_Should_Succeed(mock sqlmock.Sqlmock) {
-	gameA := models.Game{
-		ID:              uuid.New(),
-		Title:           "AMockA",
-		StorageLocation: "AMockB",
-		Status:          "AMockC",
-		Url:             "AMockD",
-		Owner:           "MockOwner",
-	}
-
-	gameB := models.Game{
-		ID:              uuid.New(),
-		Title:           "BMockA",
-		StorageLocation: "BMockB",
-		Status:          "BMockC",
-		Url:             "BMockD",
-		Owner:           "MockOwner",
-	}
-
-	mock.ExpectPrepare(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?"))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
-		WithArgs("MockOwner").
+	// Create Models
+	gameA := mocks.GameMock("A")
+	gameA.Owner = owner
+	gameB := mocks.GameMock("B")
+	gameB.Owner = owner
+	// Define queries
+	dbMock.ExpectPrepare(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?"))
+	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
+		WithArgs(owner).
 		WillReturnRows(
 			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner"}).
 				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner).
 				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner),
 		)
+	// Finally, create gameController
+	gameController := gameController(db)
+	// Prepare Gin
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("subject", owner)
+
+	//======================= EXECUTE	EXECUTE		EXECUTE		EXECUTE =======================
+	gameController.GetAllGames(c)
+
+	//======================= VERIFY	VERIFY		VERIFY		VERIFY =======================
+	//Check HTTP response
+	if w.Code != 200 {
+		b, _ := ioutil.ReadAll(w.Body)
+		t.Error(w.Code, string(b))
+	}
+
+	//Check response body
+	var responseBody []dtos.GetAllGamesResponseBody
+	err := json.Unmarshal(w.Body.Bytes(), &responseBody)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(responseBody) != 2 {
+		t.Error(fmt.Sprint("Expected 2 games, got ", len(responseBody)))
+	}
+
+	//Verify games
+	verifyDto(t, &responseBody[0], gameA)
+	verifyDto(t, &responseBody[1], gameB)
+
+}
+
+func verifyDto(t *testing.T, dto *dtos.GetAllGamesResponseBody, game *models.Game) {
+	if dto.Title != game.Title {
+		t.Error(fmt.Sprintf("Expected title %s, got %s", game.Title, dto.Title))
+	}
+	if dto.Url != game.Url {
+		t.Error(fmt.Sprintf("Expected url %s, got %s", game.Url, dto.Url))
+	}
+	if dto.ID != game.ID {
+		t.Error(fmt.Sprintf("Expected id %v, got %v", game.ID, dto.ID))
+	}
+	if dto.Status != game.Status {
+		t.Error(fmt.Sprintf("Expected status %v, got %v", game.Status, dto.Status))
+	}
 }
 
 func databaseMock() (*sql.DB, sqlmock.Sqlmock) {
@@ -109,6 +98,6 @@ func databaseMock() (*sql.DB, sqlmock.Sqlmock) {
 
 func gameController(db *sql.DB) controllers.IGameController {
 	gamesRepository := repositories.GameRepository(db)
-	gamesService := services.GameService(gamesRepository)
+	gamesService := services.GameService(gamesRepository, nil, nil)
 	return controllers.GameController(gamesService)
 }
