@@ -56,7 +56,7 @@ func (g gameRepository) FindAllByOwner(owner string) ([]models.Game, error) {
 func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 	var game models.Game
 	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).
-		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
+		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner, &game.FileName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -115,7 +115,7 @@ func (g gameRepository) Create(game *models.Game) error {
 		return err
 	}
 
-	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner))
+	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName))
 }
 
 // Delete removes the entry with a specific id from the games database.
@@ -152,7 +152,7 @@ func readGamesFromRows(query *sql.Rows) ([]models.Game, error) {
 	var games = []models.Game{}
 	for query.Next() {
 		var game models.Game
-		err := query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
+		err := query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner, &game.FileName)
 		if err != nil {
 			return nil, err
 		}

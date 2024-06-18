@@ -43,15 +43,13 @@ spec:
           spec:
             description: GameSpec defines the desired state of Game
             properties:
-              executableURL:
-                description: ExecutableURL is the URL of the game executable, which
-                  will be downloaded and mounted into the container
+              filename:
                 type: string
               name:
                 description: Name of the game
                 type: string
             required:
-            - executableURL
+            - filename
             - name
             type: object
           status:

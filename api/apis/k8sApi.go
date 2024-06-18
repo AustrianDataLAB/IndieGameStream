@@ -4,6 +4,7 @@ import (
 	"api/models"
 	"context"
 	"errors"
+
 	"github.com/google/uuid"
 	streamv1 "indiegamestream.com/indiegamestream/api/stream/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -87,8 +88,8 @@ func createAndVerifyGameResource(game *models.Game) (*streamv1.Game, error) {
 			Namespace: "default",
 		},
 		Spec: streamv1.GameSpec{
-			Name:          game.Title,
-			ExecutableURL: game.StorageLocation,
+			Name:     game.Title,
+			FileName: game.FileName,
 		},
 	}, nil
 }

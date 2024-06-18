@@ -4,7 +4,7 @@ go 1.22.0
 
 toolchain go1.22.4
 
-replace indiegamestream.com/indiegamestream => github.com/AustrianDataLAB/IndieGameStream/operator v0.0.0-20240602152718-e83f31e76ee0
+replace indiegamestream.com/indiegamestream => github.com/AustrianDataLAB/IndieGameStream/operator v0.0.0-20240618115824-3e17bbf6fde1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0

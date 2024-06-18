@@ -54,6 +54,7 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		Status:          shared.Status_New,
 		Url:             "",
 		Owner:           owner,
+		FileName:        fileHeader.Filename,
 	}
 
 	//Upload game to azure blob storage container

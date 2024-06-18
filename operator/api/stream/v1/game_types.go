@@ -26,9 +26,8 @@ import (
 // GameSpec defines the desired state of Game
 type GameSpec struct {
 	// Name of the game
-	Name string `json:"name"`
-	// ExecutableURL is the URL of the game executable, which will be downloaded and mounted into the container
-	ExecutableURL string `json:"executableURL"`
+	Name     string `json:"name"`
+	FileName string `json:"filename"`
 }
 
 // GameStatus defines the observed state of Game
