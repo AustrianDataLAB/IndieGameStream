@@ -1,3 +1,6 @@
+
+[![Build, test, scan and push images](https://github.com/AustrianDataLAB/IndieGameStream/actions/workflows/build-test-scan-push-images.yml/badge.svg?branch=main)](https://github.com/AustrianDataLAB/IndieGameStream/actions/workflows/build-test-scan-push-images.yml)
+
 # IndieGameStream
 ## TL;DR
 IndieGameStream is a cloud gaming platform that allows indie game developers to share their projects without the need to set up their own infrastructure.\
