@@ -8,5 +8,5 @@ subjects:
   namespace: api
 roleRef:
   kind: ClusterRole
-  name: game-editor-role
+  name: operator-game-editor-role
   apiGroup: rbac.authorization.k8s.io
