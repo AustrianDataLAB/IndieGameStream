@@ -1,12 +1,12 @@
 {
-  "name": "indiestream",
+  "name": "indiegamestream",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build indiestream",
+    "build": "ng build indiegamestream",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test indiestream",
+    "test": "ng test indiegamestream",
     "ci:audit": "npm audit --audit-level high",
     "ci:install": "npm ci"
   },

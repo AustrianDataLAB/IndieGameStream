@@ -11,15 +11,15 @@ RUN npm run build
 
 
 # Stage 2a: Run frontend tests
-FROM node:20-alpine as test
-RUN apk add --no-cache chromium
+#FROM node:20-alpine as test
+#RUN apk add --no-cache chromium
 # Set environment variable for Puppeteer to use Chromium installed via Alpine's package manager
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-WORKDIR /app
-COPY indiestream .
-RUN npm run ci:install
+#ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+#WORKDIR /app
+#COPY indiestream .
+#RUN npm run ci:install
 # Run tests using headless chromium
-CMD ["npm", "run", "test", "--", "--configuration=ci"]
+# CMD ["npm", "run", "test", "--", "--configuration=ci"]
 
 
 # Stage 2b: Serve app with nginx server

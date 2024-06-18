@@ -84,9 +84,20 @@ func (g gameService) Save(fileHeader *multipart.FileHeader, title string, owner 
 		log.Println(fmt.Sprintf("Error reading game url: %s", err))
 		//We can ignore this error because we try it again in FindByID
 		//Maybe the deployment is not ready yet
+	} else {
+		updateGameStatus(&game)
 	}
 
 	return &game, g.repository.Save(&game)
+}
+
+func updateGameStatus(game *models.Game) {
+	//We set the game status to Installed if we have an url
+	if game.Url != "" {
+		game.Status = shared.Status_Installed
+	} else { //Otherwise we set it to Installing
+		game.Status = shared.Status_Installing
+	}
 }
 
 func (g gameService) Delete(id uuid.UUID) error {
@@ -130,6 +141,7 @@ func (g gameService) updateGameUrl(game *models.Game) {
 		//Maybe the deployment is not ready yet
 	} else {
 		game.Url = url
+		updateGameStatus(game)
 		//Save the changes in the database
 		err := g.repository.Save(game)
 		if err != nil {
