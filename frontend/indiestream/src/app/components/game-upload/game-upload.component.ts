@@ -45,7 +45,9 @@ export class GameUploadComponent {
     file: [new DataTransfer().files, Validators.required]
   });
 
-  constructor(private gamesService: GamesService, private fb: FormBuilder) {}
+  constructor(private gamesService: GamesService, private fb: FormBuilder,
+    private router: Router
+  ) {}
 
   onFileSelected(event: any) {
     const file:File = event.target.files[0];
@@ -67,8 +69,10 @@ export class GameUploadComponent {
         );
 
       this.uploadSub = upload$.subscribe(event => {
-        if (event.type == HttpEventType.UploadProgress && event.total !== undefined) {
+        if (event.type === HttpEventType.UploadProgress && event.total !== undefined) {
           this.uploadProgress = Math.round(100 * (event.loaded / event.total));
+        } else if (event.type === HttpEventType.Response) {
+          this.router.navigate(['dashboard']);
         }
       })
     }
