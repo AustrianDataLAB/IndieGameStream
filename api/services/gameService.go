@@ -40,7 +40,9 @@ func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		g.updateGameUrl(game)
+		if game.Url == "" {
+			g.updateGameUrl(game)
+		}
 		return game, nil
 	}
 }
