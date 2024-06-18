@@ -37,7 +37,7 @@ export class GameUploadComponent {
   uploadSub: Subscription = new Subscription();
   gameForm = this.fb.group({
     title: ['', {
-      validators: [Validators.required,  Validators.maxLength(20), Validators.pattern(this.fileNameRegex)]
+      validators: [Validators.required,  Validators.maxLength(20), Validators.pattern(this.titleRegex)]
     }],
     filename: ['', { 
       validators: [Validators.required, this.fileExtensionValidator()]
