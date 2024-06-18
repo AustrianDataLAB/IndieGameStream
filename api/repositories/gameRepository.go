@@ -92,12 +92,12 @@ func (g gameRepository) Update(game *models.Game) error {
 		return errors.New("cannot update game, game is nil")
 	}
 
-	stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")
+	stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")
 	if err != nil {
 		return err
 	}
 
-	return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID))
+	return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID, game.FileName))
 }
 
 // Create inserts a new game to the games database
@@ -110,7 +110,7 @@ func (g gameRepository) Create(game *models.Game) error {
 		game.ID = uuid.New()
 	}
 
-	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner) VALUES (?,?,?,?,?,?)")
+	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner, FileName) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
