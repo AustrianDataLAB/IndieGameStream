@@ -31,7 +31,7 @@ import { Router } from '@angular/router';
 })
 export class GameUploadComponent {
   readonly allowedExtensions: string[] = ['.gba', '.gbc', '.nes', '.n64', '.v64', '.z64'];
-  readonly fileNameRegex: string = '^[a-zA-Z0-9-]+$';
+  readonly titleRegex: string = '^[a-zA-Z0-9-]+$';
 
   uploadProgress: number = 0;
   uploadSub: Subscription = new Subscription();
