@@ -64,25 +64,14 @@ jobs:
       - name: Initialize CSI
         working-directory: ./scripts/azure-csi
         run: |
-          STORAGE_KEY=$(az storage account keys list --resource-group rg-management-not2day --account-name ${{secrets.AZURERM_GAME_STORAGE_ACCOUNT_NAME}} --query "[0].value" -o tsv)
-          kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=${{secrets.AZURERM_GAME_STORAGE_ACCOUNT_NAME}} --from-literal=azurestorageaccountkey=$STORAGE_KEY
+          STORAGE_KEY=$(az storage account keys list --resource-group rg-management-not2day --account-name ${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --query "[0].value" -o tsv)
+          kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --from-literal=azurestorageaccountkey=$STORAGE_KEY
           kubectl apply -f initialize-csi-storage.yaml
 
       - name: Initialize Cluster permissions
         working-directory: ./scripts/cluster-permissions
         run: |
           kubectl apply -f api_cluster_permission.yaml
-
-      - name: Install MySQL
-        working-directory: ./helm/mysql
-        run: |
-          helm repo add mysql-operator https://mysql.github.io/mysql-operator/
-          helm repo update
-          helm install mysql-operator mysql-operator/mysql-operator --version "2.1.3" --wait \
-            --create-namespace --namespace=mysql-operator  || true
-          helm install mysql mysql-operator/mysql-innodbcluster --version "2.1.3" --wait \
-            --create-namespace --namespace=mysql -f values.yaml \
-            --set-string credentials.root.password=${{ secrets.MYSQL_ROOT_PASSWORD }} || true
 
       - name: Install Open Policy Gatekeeper
         working-directory: ./scripts/opa
@@ -91,74 +80,6 @@ jobs:
           helm repo update
           helm install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace --wait || true
           kubectl apply -f loadbalancerclass_mutator.yaml
-
-      - name: Install stunner
-        working-directory: ./scripts/localenv
-        run: make install_stunner || true
-
-      - name: Install game operator manifests
-        working-directory: ./operator
-        run: make install
-
-      - name: Deploy game operator
-        working-directory: ./operator
-        run: make deploy IMG=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.SUB_NAMESPACE }}/operator:${{ env.LABEL }}
-
-      # - name: Wait for MySQL to be ready
-      #   run: |
-      #     while true; do
-      #       POD_STATUS=$(kubectl get pod mysql-0 -n mysql --no-headers -o custom-columns=":status.phase" 2>/dev/null);
-      #       if [ "$POD_STATUS" ]; then
-      #           echo "Pod mysql-0 has been created with status: $POD_STATUS";
-      #           break;
-      #       else
-      #           echo "Waiting for pod mysql-0 to be created...";
-      #           sleep 5;
-      #       fi
-      #     done
-      #     kubectl wait --for=condition=Ready pod/mysql-0 -n mysql --timeout=120s
-          
-      #     while true; do
-      #       POD_STATUS=$(kubectl get pod -l app.kubernetes.io/component=router -n mysql --no-headers -o custom-columns=":status.phase" 2>/dev/null); \
-      #       if [ "$POD_STATUS" ]; then
-      #           echo "MySQL router has been created with status: $POD_STATUS";
-      #           break;
-      #       else
-      #           echo "Waiting for MySQL router to be created...";
-      #           sleep 5;
-      #       fi
-      #     done
-      #     kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=router -n mysql --timeout=120s
-
-      # - name: Install API
-      #   working-directory: ./helm/api
-      #   run: |
-      #     helm install -f values.yaml \
-      #       --set-string env.mysqlRootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-      #       --set-string env.azureTenantId=${{ secrets.AZURE_TENANT_ID }}
-      #       --set-string env.azureClientId=${{ secrets.CLIENT_ID }}
-      #       --set-string env.azureClientSecret=${{ secrets.CLIENT_SECRET }}
-      #       --set-string env.azureStorageAccount=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}
-      #       --set-string env.azureContainerName=${{ secrets.AZURERM_CONTAINER_NAME }}
-      #       --set-string env.azureAksClusterName=${{ secrets.AZURERM_AKS_CLUSTER_NAME }}
-      #       --set-string env.azurermSubscriptionId=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
-      #       --set-string env.azurermResourceGroupName=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}
-      #       --set-string image.label=${{ env.LABEL }} \
-      #       api .
-
-      # - name: Wait for external IP of API
-      #   run: |
-      #     until [ -n "$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
-      #       sleep 5
-      #     done
-
-      # - name: Install frontend
-      #   working-directory: ./helm/frontend
-      #   run: |
-      #     helm install -f values.yaml \
-      #       --set-string appConfig.apiUrl=http://$(kubectl get svc api -n api -o jsonpath='{.status.loadBalancer.ingress[0].ip}'):$(kubectl get svc api -n api -o jsonpath='{.spec.ports[0].port}') \
-      #       --set-string image.label=${{ env.LABEL }} \
-      #       frontend .
 
       - name: Logout of Azure
         run: az logout
