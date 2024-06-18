@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -386,6 +387,7 @@ func int32Ptr(i int32) *int32 {
 
 func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, resourceName string, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
 	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", game.Spec.FileName)
+	newSelector := fmt.Sprintf("%s-%s", "coordinator", game.Name)
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -395,11 +397,11 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 		Spec: appsv1.DeploymentSpec{
 			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": "coordinator"},
+				MatchLabels: map[string]string{"app": newSelector},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"app": "coordinator"},
+					Labels: map[string]string{"app": newSelector},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -443,7 +445,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 								{
 									Name:      "gamestorage",
 									MountPath: fullpath,
-									SubPath:   game.Spec.FileName,
+									SubPath:   game.Name,
 								},
 							},
 						},
@@ -472,7 +474,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 
 func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, resourceName string, coordIP string, workerIP string) (*appsv1.Deployment, error) {
 	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", game.Spec.FileName)
-
+	newSelector := fmt.Sprintf("%s-%s", "worker", game.Name)
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceName,
@@ -481,11 +483,11 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 		Spec: appsv1.DeploymentSpec{
 			Replicas: int32Ptr(2),
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": "worker"},
+				MatchLabels: map[string]string{"app": newSelector},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"app": "worker"},
+					Labels: map[string]string{"app": newSelector},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -517,7 +519,7 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 								{
 									Name:      "gamestorage",
 									MountPath: fullpath,
-									SubPath:   game.Spec.FileName,
+									SubPath:   game.Name,
 								},
 							},
 						},
@@ -548,9 +550,10 @@ func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string,
 
 	className := "tailscale"
 	annotation := fmt.Sprintf("%s-%s", game.Spec.Name, game.Name)
+	newSelector := fmt.Sprintf("%s-%s", selector, game.Name)
 	annotations := map[string]string{}
 	outsidePort := port
-	if selector == "coordinator" {
+	if strings.HasPrefix(selector, "coordinator") {
 		annotations["tailscale.com/hostname"] = annotation
 		outsidePort = 80
 	}
@@ -562,7 +565,7 @@ func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string,
 			Annotations: annotations,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector:          map[string]string{"app": selector},
+			Selector:          map[string]string{"app": newSelector},
 			LoadBalancerClass: &className,
 			Ports: []corev1.ServicePort{
 				{
@@ -581,13 +584,14 @@ func (r *GameReconciler) constructLoadBalancer(game *streamv1.Game, name string,
 	return svc, nil
 }
 func (r *GameReconciler) constructLoadBalancerUDP(game *streamv1.Game, name string, selector string, port int32) (*corev1.Service, error) {
+	newSelector := fmt.Sprintf("%s-%s", "worker", game.Name)
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: game.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": selector},
+			Selector: map[string]string{"app": newSelector},
 			Ports: []corev1.ServicePort{
 				{
 					Protocol:   corev1.ProtocolUDP,
