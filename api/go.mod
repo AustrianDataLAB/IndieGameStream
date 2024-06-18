@@ -7,6 +7,7 @@ toolchain go1.22.4
 replace indiegamestream.com/indiegamestream => github.com/AustrianDataLAB/IndieGameStream/operator v0.0.0-20240602152718-e83f31e76ee0
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v5 v5.0.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
@@ -16,6 +17,7 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/stretchr/testify v1.9.0
 	google.golang.org/api v0.183.0
 	indiegamestream.com/indiegamestream v0.0.0-00010101000000-000000000000
 	k8s.io/apimachinery v0.30.1
@@ -28,7 +30,6 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
@@ -72,7 +73,9 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.opencensus.io v0.24.0 // indirect
