@@ -78,7 +78,7 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Reconciling Game", "Name", game.Spec.Name, "ExecutableURL", game.Spec.ExecutableURL)
+	log.Info("Reconciling Game", "Name", game.Spec.Name, "FileName", game.Spec.FileName)
 
 	// name of our custom finalizer
 	gameFinalizer := "game.stream.indiegamestream.com/finalizer"
@@ -385,7 +385,7 @@ func int32Ptr(i int32) *int32 {
 }
 
 func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, resourceName string, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
-	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", "test.gba")
+	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", game.Spec.FileName)
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -443,7 +443,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 								{
 									Name:      "gamestorage",
 									MountPath: fullpath,
-									SubPath:   "varooom-3d (1).gba",
+									SubPath:   game.Spec.FileName,
 								},
 							},
 						},
@@ -471,7 +471,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 }
 
 func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, resourceName string, coordIP string, workerIP string) (*appsv1.Deployment, error) {
-	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", "test.gba")
+	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", game.Spec.FileName)
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -517,7 +517,7 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 								{
 									Name:      "gamestorage",
 									MountPath: fullpath,
-									SubPath:   "varooom-3d (1).gba",
+									SubPath:   game.Spec.FileName,
 								},
 							},
 						},

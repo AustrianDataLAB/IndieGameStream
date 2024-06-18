@@ -7,4 +7,4 @@ metadata:
   name: game-sample2
 spec:
   name: "SPECGAME2"
-  executableURL: "https://example.com/game"
+  fileName: "varooom-3d (1).gba"
