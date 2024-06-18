@@ -52,7 +52,7 @@ func (g gameRepository) FindAllByOwner(owner string) ([]models.Game, error) {
 func (g gameRepository) FindByID(id uuid.UUID) (*models.Game, error) {
 	var game models.Game
 	err := g.db.QueryRow("SELECT * FROM games WHERE ID = ?", id).
-		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
+		Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner, &game.FileName)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -74,24 +74,24 @@ func (g gameRepository) Save(game *models.Game) error {
 
 		if existing != nil {
 			//If yes, update the existing entry
-			stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")
+			stmt, err := g.db.Prepare("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")
 			if err != nil {
 				return err
 			}
 
-			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID))
+			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID, game.FileName))
 		}
 	} else {
 		game.ID = uuid.New()
 	}
 
 	//If not create a new one
-	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner) VALUES (?,?,?,?,?,?)")
+	stmt, err := g.db.Prepare("INSERT INTO games (ID, Title, StorageLocation, Status, Url, Owner, FileName) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
 
-	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner))
+	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName))
 }
 
 // Delete removes the entry with a specific id from the games database.
@@ -128,7 +128,7 @@ func readGamesFromRows(query *sql.Rows) ([]models.Game, error) {
 	var games = []models.Game{}
 	for query.Next() {
 		var game models.Game
-		err := query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner)
+		err := query.Scan(&game.ID, &game.Title, &game.StorageLocation, &game.Status, &game.Url, &game.Owner, &game.FileName)
 		if err != nil {
 			return nil, err
 		}
