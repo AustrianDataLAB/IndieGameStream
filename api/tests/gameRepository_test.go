@@ -180,15 +180,9 @@ func Test_Save_Existing_Game_Should_Succeed(t *testing.T) {
 		Owner:           "MockOwner",
 		FileName:        "TestFile.nes",
 	}
-	
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id FROM games WHERE ID = ?")).
 		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"Id"}).AddRow(id))
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
-		WithArgs(id).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
-			AddRow(id, "", "", "", "", "", ""),
-	)
 
 	mock.ExpectPrepare(regexp.
 		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?"))
