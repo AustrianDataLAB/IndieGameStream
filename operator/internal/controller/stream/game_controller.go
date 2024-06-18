@@ -385,6 +385,8 @@ func int32Ptr(i int32) *int32 {
 }
 
 func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Game, resourceName string, gatewayConfig *stunnerv1.GatewayConfig, gatewayIP string) (*appsv1.Deployment, error) {
+	fullpath := fmt.Sprintf("/usr/local/share/cloud-game/assets/games/%s", "test.gba")
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceName,
@@ -403,7 +405,7 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 					Containers: []corev1.Container{
 						{
 							Name:    "coordinator",
-							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:master",
+							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:v3.0.5",
 							Command: []string{"./coordinator"},
 							Args:    []string{""},
 							Ports: []corev1.ContainerPort{
@@ -436,7 +438,24 @@ func (r *GameReconciler) constructControllerDeploymentForGame(game *streamv1.Gam
 									Name:  "CLOUD_GAME_WEBRTC_ICESERVERS_1_USERNAME",
 									Value: gatewayConfig.Spec.UserName,
 								},
-							}, //TODO mount game executable and config game config file
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "gamestorage",
+									MountPath: fullpath,
+									SubPath:   "varooom-3d (1).gba",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "gamestorage",
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: "azure-blob-pvc",
+								},
+							},
 						},
 					},
 				},
@@ -472,7 +491,7 @@ func (r *GameReconciler) constructWorkerDeploymentForGame(game *streamv1.Game, r
 					Containers: []corev1.Container{
 						{
 							Name:    "worker",
-							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:master",
+							Image:   "ghcr.io/giongto35/cloud-game/cloud-game:v3.0.5",
 							Command: []string{"./worker"},
 							Args:    []string{""},
 							Ports: []corev1.ContainerPort{
