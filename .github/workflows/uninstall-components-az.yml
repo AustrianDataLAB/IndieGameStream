@@ -50,7 +50,7 @@ jobs:
           tags: tag:ci
       
       - name: Configure kubernetes config
-        run: tailscale configure kubeconfig tailscale-operator
+        run: tailscale configure kubeconfig tailscale-operator-1
 
       - name: Uninstall MySQL
         working-directory: ./helm/mysql

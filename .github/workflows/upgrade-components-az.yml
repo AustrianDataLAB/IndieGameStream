@@ -55,7 +55,7 @@ jobs:
           tags: tag:ci
       
       - name: Configure kubernetes config
-        run: tailscale configure kubeconfig tailscale-operator
+        run: tailscale configure kubeconfig tailscale-operator-1
 
       - name: Undeploy game operator
         working-directory: ./operator

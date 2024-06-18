@@ -58,7 +58,7 @@ jobs:
           tags: tag:ci
       
       - name: Configure kubernetes config
-        run: tailscale configure kubeconfig tailscale-operator
+        run: tailscale configure kubeconfig tailscale-operator-1
 
       - name: Install Grafana
         if: ${{ github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana') }}
