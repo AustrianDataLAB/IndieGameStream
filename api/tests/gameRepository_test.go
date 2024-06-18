@@ -192,7 +192,7 @@ func Test_Save_Existing_Game_Should_Succeed(t *testing.T) {
 
 	mock.ExpectExec(regexp.
 		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")).
-		WithArgs(game.Title, game.StorageLocation, game.Status, game.Url, game.ID, game.FileName).
+		WithArgs(game.Title, game.StorageLocation, game.Status, game.Url, game.FileName, game.ID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	//Run the test

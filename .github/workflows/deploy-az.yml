@@ -64,8 +64,8 @@ jobs:
       - name: Initialize CSI
         working-directory: ./scripts/azure-csi
         run: |
-          STORAGE_KEY=$(az storage account keys list --resource-group rg-management-not2day --account-name ${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --query "[0].value" -o tsv)
-          kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --from-literal=azurestorageaccountkey=$STORAGE_KEY
+          STORAGE_KEY=$(az storage account keys list --resource-group rg-management-not2day --account-name ${{secrets.AZURERM_GAME_STORAGE_ACCOUNT_NAME}} --query "[0].value" -o tsv)
+          kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=${{secrets.AZURERM_GAME_STORAGE_ACCOUNT_NAME}} --from-literal=azurestorageaccountkey=$STORAGE_KEY
           kubectl apply -f initialize-csi-storage.yaml
 
       - name: Initialize Cluster permissions

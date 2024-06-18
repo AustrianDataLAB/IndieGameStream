@@ -3,6 +3,7 @@ package repositories
 import (
 	"api/models"
 	"database/sql"
+
 	"github.com/google/uuid"
 )
 
@@ -79,7 +80,7 @@ func (g gameRepository) Save(game *models.Game) error {
 				return err
 			}
 
-			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.ID, game.FileName))
+			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.FileName, game.ID))
 		}
 	} else {
 		game.ID = uuid.New()
