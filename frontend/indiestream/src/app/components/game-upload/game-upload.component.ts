@@ -3,11 +3,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBar } from "@angular/material/progress-bar";
 import { MatIcon } from "@angular/material/icon";
 import { HttpClientModule, HttpEventType } from "@angular/common/http";
-import { catchError, EMPTY, finalize, Subscription } from "rxjs";
+import { catchError, EMPTY, finalize, tap, Subscription } from "rxjs";
 import { NgIf } from "@angular/common";
 import { GamesService } from "../../services/games.service";
 import { MatFormField, MatHint, MatInput, MatLabel, MatSuffix } from "@angular/material/input";
-import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-game-upload',
@@ -29,12 +30,18 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
   styleUrl: './game-upload.component.scss'
 })
 export class GameUploadComponent {
+  readonly allowedExtensions: string[] = ['.gba', '.gbc', '.nes', '.n64', '.v64', '.z64'];
+  readonly fileNameRegex: string = '^[a-zA-Z0-9-]+$';
 
   uploadProgress: number = 0;
   uploadSub: Subscription = new Subscription();
   gameForm = this.fb.group({
-    title: ['', Validators.required],
-    filename: ['', Validators.required],
+    title: ['', {
+      validators: [Validators.required, Validators.pattern(this.fileNameRegex)]
+    }],
+    filename: ['', { 
+      validators: [Validators.required, Validators.maxLength(20), this.fileExtensionValidator()]
+    }],
     file: [new DataTransfer().files, Validators.required]
   });
 
@@ -72,5 +79,16 @@ export class GameUploadComponent {
     this.uploadSub.unsubscribe();
     this.uploadSub = new Subscription();
     this.gameForm.reset();
+  }
+
+  fileExtensionValidator(): Validators {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null; // Return null if there's no value (valid case)
+      }
+      const fileName: string = control.value;
+      const isValid = this.allowedExtensions.some(ext => fileName.toLowerCase().endsWith(ext.toLowerCase()));
+      return isValid ? null : { invalidExtension: { value: fileName } };
+    };
   }
 }
