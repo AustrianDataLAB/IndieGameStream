@@ -1,4 +1,5 @@
 name: Install components to Azure
+run-name: Installing component '${{ github.event.inputs.component }}' with label '${{ github.event.inputs.label }}' to AKS cluster
 
 on: 
   workflow_dispatch:
