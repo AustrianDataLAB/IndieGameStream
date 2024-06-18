@@ -26,6 +26,8 @@ RUN npm run build
 FROM nginx:alpine
 # Copy the build output to replace the default nginx contents
 COPY --from=build /app/dist/indiestream/browser /usr/share/nginx/html
+# Copy nginx configurationf ile
+COPY nginx.conf /etc/nginx/nginx.conf
 # Need to expose port 80
 EXPOSE 80
 # Start nginx 
