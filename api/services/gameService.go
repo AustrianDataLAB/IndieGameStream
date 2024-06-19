@@ -40,7 +40,9 @@ func (g gameService) FindByID(id uuid.UUID) (*models.Game, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		g.updateGameUrl(game)
+		if game.Url == "" {
+			g.updateGameUrl(game)
+		}
 		return game, nil
 	}
 }
@@ -133,10 +135,6 @@ func (g gameService) Delete(id uuid.UUID) error {
 }
 
 func (g gameService) updateGameUrl(game *models.Game) {
-	if game == nil {
-		return
-	}
-
 	url, err := g.k8s.ReadGameUrl(game.ID)
 	if err != nil {
 		log.Println(fmt.Sprintf("Error reading game url: %s", err))
