@@ -68,7 +68,7 @@ jobs:
           helm repo update
           helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring \
           --set grafana.service.type="LoadBalancer" --set grafana.service.loadBalancerClass="tailscale" \
-          --set-json grafana.service.annotations='{"tailscale.com/hostname": "grafana"} \
+          --set-json grafana.service.annotations='{"tailscale.com/hostname": "grafana"}' \
           --set-string grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
 
       - name: Install MySQL
