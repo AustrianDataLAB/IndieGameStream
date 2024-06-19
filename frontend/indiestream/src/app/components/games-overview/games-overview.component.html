@@ -1,27 +1,38 @@
-<h2>Hi {{authService.getName()}}</h2>
+<h2>Hi, {{authService.getName()}}!</h2>
 
 <div *ngIf="games.length === 0">
   <div class="text-with-icon no-games-warning">
     <mat-icon>info</mat-icon>
     <div>You have not uploaded any games yet :/</div>
   </div>
-  <button mat-raised-button color="primary" [routerLink]="['/upload']"> Upload now</button>
+  <button mat-raised-button color="primary" [routerLink]="['/upload']">Upload now</button>
 </div>
 
-<mat-card *ngFor="let game of games" class="game-card">
-  <mat-card-header>
-    <mat-card-title>{{ game.title }}</mat-card-title>
-    <mat-card-subtitle>Game ID: {{ game.id }}</mat-card-subtitle>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Status: {{ game.status }}</p>
-    <a href="{{game.url}}">URL: {{ game.url }}</a>
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-button color="primary" (click)="refreshGame(game.id)">Refresh</button>
-    <button mat-button color="warn" (click)="deleteGame(game.id)">Delete</button>
-  </mat-card-actions>
-</mat-card>
+<div *ngIf="games.length !== 0" class="welcome-container">
+  <div>
+    <div>Here you can see all your uploaded games. Share them with your friends!</div>
+  </div>
+  <button mat-raised-button color="primary" (click)="refreshAllGames()">Refresh All</button>
+</div>
 
-<button *ngIf="games.length !== 0" mat-raised-button color="primary" (click)="refreshAllGames()">Refresh All</button>
-
+<div class="games-list">
+  <mat-card *ngFor="let game of games" class="game-card">
+    <mat-card-header>
+      <mat-card-title>{{ game.title }}</mat-card-title>
+      <mat-card-subtitle>Game ID: {{ game.id }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p><strong>Status: </strong>{{ game.status }}</p>
+      <div *ngIf="game.url" class="url-container">
+        <span><strong>URL: </strong></span><a href="{{game.url}}">{{ game.url }}</a>
+        <button mat-icon-button aria-label="Copy" [cdkCopyToClipboard]="game.url">
+          <mat-icon aria-hidden="false" fontIcon="content_copy"></mat-icon>
+        </button>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" (click)="refreshGame(game.id)">Refresh</button>
+      <button mat-button color="warn" (click)="deleteGame(game.id)">Delete</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

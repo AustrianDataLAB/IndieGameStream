@@ -26,11 +26,13 @@ import {
   MatCardTitle
 } from "@angular/material/card";
 import {OAuthService} from "angular-oauth2-oidc";
+import {ClipboardModule} from "@angular/cdk/clipboard";
 
 @Component({
     selector: 'app-games-overview',
     standalone: true,
   imports: [
+    ClipboardModule,
     MatButton,
     NgForOf,
     MatTable,
