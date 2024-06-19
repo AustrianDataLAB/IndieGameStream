@@ -87,7 +87,7 @@ jobs:
       - name: Uninstall Grafana
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana')) }}
         run: | 
-          helm uninstall grafana -n monitoring --ignore-not-found  --wait
+          helm uninstall prometheus -n monitoring --ignore-not-found  --wait
           kubectl delete ns monitoring
 
       - name: Logout of Azure
