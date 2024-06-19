@@ -70,7 +70,7 @@ func Test_Read_By_Id_And_Refresh_Should_Succeed(t *testing.T) {
 
 	dbMock.ExpectExec(regexp.
 		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")).
-		WithArgs(game.Title, game.StorageLocation, game.Status, url, game.FileName, game.ID).
+		WithArgs(game.Title, game.StorageLocation, shared.Status_Installed, url, game.FileName, game.ID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// Finally, create gameController
