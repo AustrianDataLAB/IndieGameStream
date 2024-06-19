@@ -10,20 +10,27 @@
  }
 
 .toolbar {
+  position: fixed;
+  z-index: 10;
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .sidenav-container {
-  position: fixed;
   height: 100%;
   width: 100%;
+  padding-bottom: 100px;
+}
+
+.sidenav-container mat-sidenav {
+  margin-top: 64px;
 }
 
 .sidenav-content {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
+  margin-top: 64px;
+  padding: 1rem;
 }
 
 .user-avatar {
