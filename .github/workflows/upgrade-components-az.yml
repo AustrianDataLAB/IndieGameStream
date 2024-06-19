@@ -1,6 +1,7 @@
 # Assumes that the component was already installed to the cluster and we only want to update the image version
 # MySQL and STUNner should already be installed when using this workflow
 name: Upgrade components on Azure
+run-name: Upgrading component '${{ github.event.inputs.component }}' to label '${{ github.event.inputs.label }}' on AKS cluster
 
 on:
   workflow_dispatch:
@@ -55,7 +56,7 @@ jobs:
           tags: tag:ci
       
       - name: Configure kubernetes config
-        run: tailscale configure kubeconfig tailscale-operator
+        run: tailscale configure kubeconfig tailscale-operator-1
 
       - name: Undeploy game operator
         working-directory: ./operator

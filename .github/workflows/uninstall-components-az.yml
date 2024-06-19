@@ -1,4 +1,5 @@
 name: Uninstall components from Azure
+run-name: Uninstalling component '${{ github.event.inputs.component }}' from AKS cluster
 
 on:
   workflow_dispatch:
@@ -50,7 +51,7 @@ jobs:
           tags: tag:ci
       
       - name: Configure kubernetes config
-        run: tailscale configure kubeconfig tailscale-operator
+        run: tailscale configure kubeconfig tailscale-operator-1
 
       - name: Uninstall MySQL
         working-directory: ./helm/mysql
@@ -67,11 +68,6 @@ jobs:
         run: |
           helm uninstall stunner -n stunner --ignore-not-found --wait
           kubectl delete ns stunner
-
-      #- name: Uninstall game operator manifests
-      #  working-directory: ./operator
-      #  if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'operator')) }}
-      #  run: make uninstall
 
       - name: Undeploy game operator
         working-directory: ./operator
@@ -91,7 +87,7 @@ jobs:
       - name: Uninstall Grafana
         if: ${{ !cancelled() && (github.event.inputs.component == 'all' || contains(github.event.inputs.component, 'grafana')) }}
         run: | 
-          helm uninstall grafana -n monitoring --ignore-not-found  --wait
+          helm uninstall prometheus -n monitoring --ignore-not-found  --wait
           kubectl delete ns monitoring
 
       - name: Logout of Azure

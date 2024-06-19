@@ -1,0 +1,83 @@
+name: Deploy AKS cluster
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+        id: install1
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.AZURERM_TENANT_ID }}
+
+      - name: Terraform Apply
+        working-directory: ./iac
+        run: |
+          export ARM_CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
+          export ARM_CLIENT_ID=${{ secrets.CLIENT_ID }}
+          export TF_VAR_subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}
+          export TF_VAR_tenant_id=${{ secrets.AZURERM_TENANT_ID }}
+          export TF_CLI_ARGS_init=" -backend-config=\"resource_group_name=${{ secrets.AZURERM_RESOURCE_GROUP_NAME }}\"  -backend-config=\"key=${{ secrets.KEY }}.tfstate\" -backend-config=\"storage_account_name=${{ secrets.AZURERM_STORAGE_ACCOUNT_NAME }}\"    -backend-config=\"container_name=tfbootstrapadmin\"   -backend-config=\"subscription_id=${{ secrets.AZURERM_SUBSCRIPTION_ID }}\"  -backend-config=\"tenant_id=${{ secrets.AZURERM_TENANT_ID }}\" "
+          terraform init
+          terraform plan -out=tfplan.bin -input=false
+          terraform apply -auto-approve "tfplan.bin"
+      
+      - name: Apply tailscale operator
+        working-directory: ./iac
+        run: |
+          az aks command invoke -n ${{ secrets.AZURERM_AKS_CLUSTER_NAME }} -g rg-service-not2day --command "helm repo add tailscale https://pkgs.tailscale.com/helmcharts && helm repo update && helm upgrade --install tailscale-operator-1 tailscale/tailscale-operator --set-string oauth.clientId=${{secrets.TAILSCALE_CLIENT_ID}} --set-string oauth.clientSecret=${{secrets.TAILSCALE_CLIENT_SECRET}} --set-string apiServerProxyConfig.mode=true --wait || true"
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{secrets.TAILSCALE_CLIENT_ID_2}}
+          oauth-secret: ${{secrets.TAILSCALE_CLIENT_SECRET_2}}
+          tags: tag:ci
+
+      - name: Configure kubernetes config
+        run: tailscale configure kubeconfig tailscale-operator-1
+
+      - name: Check working cluster
+        run: kubectl get pods -A    
+
+      - name: Initialize CSI
+        working-directory: ./scripts/azure-csi
+        run: |
+          STORAGE_KEY=$(az storage account keys list --resource-group rg-management-not2day --account-name ${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --query "[0].value" -o tsv)
+          kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=${{secrets.AZURERM_STORAGE_ACCOUNT_NAME}} --from-literal=azurestorageaccountkey=$STORAGE_KEY
+          kubectl apply -f initialize-csi-storage.yaml
+
+      - name: Initialize Cluster permissions
+        working-directory: ./scripts/cluster-permissions
+        run: |
+          kubectl apply -f api_cluster_permission.yaml
+
+      - name: Install Open Policy Gatekeeper
+        working-directory: ./scripts/opa
+        run: |
+          helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+          helm repo update
+          helm install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace --wait || true
+          kubectl apply -f loadbalancerclass_mutator.yaml
+
+      - name: Logout of Azure
+        run: az logout
+
+
+
+  

@@ -1,3 +1,6 @@
+
+[![Build, test, scan and push images](https://github.com/AustrianDataLAB/IndieGameStream/actions/workflows/build-test-scan-push-images.yml/badge.svg?branch=main)](https://github.com/AustrianDataLAB/IndieGameStream/actions/workflows/build-test-scan-push-images.yml)
+
 # IndieGameStream
 ## TL;DR
 IndieGameStream is a cloud gaming platform that allows indie game developers to share their projects without the need to set up their own infrastructure.\
@@ -25,8 +28,9 @@ Both for solo developers and small indie teams, our platform allows you to uploa
 Our infrastructure deals with the technical aspects, while the developers can focus on the development of their games.
 
 ## Versioning scheme
-By tagging a commit or branch the next build will automatically include the specified version.\
-The build process is triggered by tags formatted as "v0.0.0".
+We use semantic versioning as defined in https://semver.org/. \
+By tagging a commit or branch the next build will automatically include the specified version.
+The build process is triggered by tags formatted as "v\*.\*.\*".
 
 ## Functionality
 ### Developer
