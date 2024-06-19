@@ -14,5 +14,6 @@ func GameMock(identifier string) *models.Game {
 		Status:          shared.Status_New,
 		Url:             "Url_" + identifier,
 		Owner:           "Owner_" + identifier,
+		FileName:        "File_" + identifier,
 	}
 }

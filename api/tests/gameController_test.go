@@ -55,22 +55,22 @@ func Test_Read_By_Id_And_Refresh_Should_Succeed(t *testing.T) {
 	// Define queries
 	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(game.ID).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName),
 	)
 
 	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(game.ID).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName),
 	)
 
 	dbMock.ExpectPrepare(regexp.
-		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?"))
+		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?"))
 
 	dbMock.ExpectExec(regexp.
-		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=? WHERE ID = ?")).
-		WithArgs(game.Title, game.StorageLocation, game.Status, url, game.ID).
+		QuoteMeta("UPDATE games SET Title=?, StorageLocation=?, Status=?, Url=?, FileName=? WHERE ID = ?")).
+		WithArgs(game.Title, game.StorageLocation, game.Status, url, game.FileName, game.ID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// Finally, create gameController
@@ -122,8 +122,8 @@ func Test_Read_By_Id_Should_Succeed(t *testing.T) {
 	// Define queries
 	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE ID = ?")).
 		WithArgs(game.ID).WillReturnRows(
-		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner),
+		sqlmock.NewRows([]string{"Id", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+			AddRow(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName),
 	)
 
 	// Finally, create gameController
@@ -176,9 +176,9 @@ func Test_Read_All_Should_Succeed(t *testing.T) {
 	dbMock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM games WHERE owner = ?")).
 		WithArgs(owner).
 		WillReturnRows(
-			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner"}).
-				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner).
-				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner),
+			sqlmock.NewRows([]string{"ID", "Title", "StorageLocation", "Status", "Url", "Owner", "FileName"}).
+				AddRow(gameA.ID, gameA.Title, gameA.StorageLocation, gameA.Status, gameA.Url, gameA.Owner, gameA.FileName).
+				AddRow(gameB.ID, gameB.Title, gameB.StorageLocation, gameB.Status, gameB.Url, gameB.Owner, gameB.FileName),
 		)
 	// Finally, create gameController
 	gameController := gameController(db, nil, nil)
