@@ -37,8 +37,8 @@ export class AuthService {
     );
   }
 
-  login() {
-    this.oAuthService.initCodeFlow(this.router.url);
+  login(route: string) {
+    this.oAuthService.initLoginFlow(route);
   }
 
   logout() {

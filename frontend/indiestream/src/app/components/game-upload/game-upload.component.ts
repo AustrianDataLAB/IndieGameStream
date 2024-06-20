@@ -39,7 +39,7 @@ export class GameUploadComponent {
     title: ['', {
       validators: [Validators.required,  Validators.maxLength(20), Validators.pattern(this.titleRegex)]
     }],
-    filename: ['', { 
+    filename: ['', {
       validators: [Validators.required, this.fileExtensionValidator()]
     }],
     file: [new DataTransfer().files, Validators.required]

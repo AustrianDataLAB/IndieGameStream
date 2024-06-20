@@ -30,7 +30,7 @@ export class GamesService {
   }
 
   deleteGame(id: string): void {
-    this.http.delete(this.apiUrl + "/games/" + id)
+    this.http.delete(this.apiUrl + "/games/" + id);
   }
 
   uploadGame(gameForm: FormGroup): Observable<HttpEvent<Object>> {

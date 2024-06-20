@@ -29,11 +29,10 @@ export class AuthInitializer {
       this.oauthService.configure(authConfig);
       this.oauthService.setupAutomaticSilentRefresh();
       this.oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
-        /*
         if (this.oauthService.hasValidIdToken() && this.oauthService.hasValidAccessToken()) {
           const url = decodeURIComponent(<string>this.oauthService.state);
           this.router.navigateByUrl(url);
-        }*/
+        }
         resolve();
       }).catch(err => {
         console.error('OAuth initialization error', err);

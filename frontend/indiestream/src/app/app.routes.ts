@@ -4,6 +4,8 @@ import {GamesOverviewComponent} from "./components/games-overview/games-overview
 import {AccountComponent} from "./components/account/account.component";
 import {LandingPageComponent} from "./components/landing-page/landing-page.component";
 import {AuthGuard} from "./guards/auth.guard";
+import {AppComponent} from "./app.component";
+import {LayoutComponent} from "./components/layout/layout.component";
 
 export const routes: Route[] = [
   {
@@ -11,22 +13,14 @@ export const routes: Route[] = [
     component: LandingPageComponent,
   },
   {
-    path: 'dashboard',
-    component: GamesOverviewComponent,
+    path: '',
+    component: LayoutComponent,
     canActivate: [AuthGuard],
-  },
-  {
-    path: 'upload',
-    component: GameUploadComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'account',
-    component: AccountComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: '**',
-    redirectTo: '',
+    children: [
+      { path: 'dashboard', component: GamesOverviewComponent },
+      { path: 'upload', component: GameUploadComponent },
+      { path: 'account', component: AccountComponent },
+      { path: '**', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
   },
 ];

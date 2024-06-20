@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
+import { Router } from "@angular/router";
 
 @Component({
   selector: 'app-landing-page',
@@ -9,9 +9,9 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './landing-page.component.scss'
 })
 export class LandingPageComponent {
-  constructor(private authService: AuthService) {}
+  constructor(private router: Router) {}
 
-  login() {
-    this.authService.login();
+  moveToDashboard() {
+    this.router.navigate(['dashboard']);
   }
 }
