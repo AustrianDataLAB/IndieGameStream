@@ -80,7 +80,8 @@ func (g gameRepository) Save(game *models.Game) error {
 				return err
 			}
 
-			return checkResult(stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.FileName, game.ID))
+			_, err = stmt.Exec(game.Title, game.StorageLocation, game.Status, game.Url, game.FileName, game.ID)
+			return err
 		}
 	} else {
 		game.ID = uuid.New()
@@ -92,7 +93,8 @@ func (g gameRepository) Save(game *models.Game) error {
 		return err
 	}
 
-	return checkResult(stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName))
+	_, err = stmt.Exec(game.ID, game.Title, game.StorageLocation, game.Status, game.Url, game.Owner, game.FileName)
+	return err
 }
 
 // Delete removes the entry with a specific id from the games database.
@@ -103,26 +105,21 @@ func (g gameRepository) Delete(id uuid.UUID) error {
 		return err
 	}
 
-	return checkResult(stmt.Exec(id))
-}
-
-func checkResult(res sql.Result, err error) error {
+	result, err := stmt.Exec(id)
 	if err != nil {
 		return err
 	}
 
-	return checkAffectedRows(res)
-}
-
-func checkAffectedRows(res sql.Result) error {
-	rows, err := res.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-	if rows == 0 {
+
+	if rowsAffected == 0 {
 		return sql.ErrNoRows
 	}
-	return nil
+
+	return err
 }
 
 func readGamesFromRows(query *sql.Rows) ([]models.Game, error) {
