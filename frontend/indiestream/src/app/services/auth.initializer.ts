@@ -25,13 +25,16 @@ export class AuthInitializer {
         oidc: true,
         scope: 'openid profile email',
         showDebugInformation: isDevMode(),
+        requireHttps: false,
       };
       this.oauthService.configure(authConfig);
       this.oauthService.setupAutomaticSilentRefresh();
       this.oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
         if (this.oauthService.hasValidIdToken() && this.oauthService.hasValidAccessToken()) {
           const url = decodeURIComponent(<string>this.oauthService.state);
-          this.router.navigateByUrl(url);
+          if (url) {
+            this.router.navigateByUrl(url);
+          }
         }
         resolve();
       }).catch(err => {

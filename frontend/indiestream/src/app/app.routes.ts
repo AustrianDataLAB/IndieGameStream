@@ -4,13 +4,13 @@ import {GamesOverviewComponent} from "./components/games-overview/games-overview
 import {AccountComponent} from "./components/account/account.component";
 import {LandingPageComponent} from "./components/landing-page/landing-page.component";
 import {AuthGuard} from "./guards/auth.guard";
-import {AppComponent} from "./app.component";
 import {LayoutComponent} from "./components/layout/layout.component";
 
 export const routes: Route[] = [
   {
     path: '',
     component: LandingPageComponent,
+    pathMatch: 'full',
   },
   {
     path: '',

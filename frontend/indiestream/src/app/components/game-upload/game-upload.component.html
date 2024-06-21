@@ -3,11 +3,26 @@
     <mat-form-field subscriptSizing="dynamic" class="input-title">
       <mat-label>Title of your game</mat-label>
       <input matInput type="text" formControlName="title">
+      <mat-error *ngIf="gameForm.get('title')?.hasError('required')">
+        A title is required
+      </mat-error>
+      <mat-error *ngIf="gameForm.get('title')?.hasError('maxlength')">
+        Max 20 characters allowed
+      </mat-error>
+      <mat-error *ngIf="gameForm.get('title')?.hasError('pattern')">
+        Title must be alphanumeric only
+      </mat-error>
     </mat-form-field>
     <mat-form-field subscriptSizing="dynamic">
       <input type="file" class="input-file" (change)="onFileSelected($event)" #fileUpload>
       <mat-label> Chose game</mat-label>
       <input type="text" readonly matInput formControlName="filename">
+      <mat-error *ngIf="gameForm.get('filename')?.hasError('required')">
+        A game is required
+      </mat-error>
+      <mat-error *ngIf="gameForm.get('filename')?.hasError('invalidExtension')">
+        Allowed extensions are: {{this.allowedExtensions.join(', ')}}
+      </mat-error>
       <button type="button" mat-icon-button matSuffix color="primary"
               (click)="fileUpload.click()">
         <mat-icon>attach_file</mat-icon>

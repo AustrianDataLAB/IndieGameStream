@@ -6,7 +6,7 @@ import { HttpClientModule, HttpEventType } from "@angular/common/http";
 import { catchError, EMPTY, finalize, tap, Subscription } from "rxjs";
 import { NgIf } from "@angular/common";
 import { GamesService } from "../../services/games.service";
-import { MatFormField, MatHint, MatInput, MatLabel, MatSuffix } from "@angular/material/input";
+import { MatError, MatFormField, MatHint, MatInput, MatLabel, MatSuffix } from "@angular/material/input";
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
 import { Router } from '@angular/router';
 
@@ -25,6 +25,7 @@ import { Router } from '@angular/router';
     MatSuffix,
     ReactiveFormsModule,
     HttpClientModule,
+    MatError,
   ],
   templateUrl: './game-upload.component.html',
   styleUrl: './game-upload.component.scss'

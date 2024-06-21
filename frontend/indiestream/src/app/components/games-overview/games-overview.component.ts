@@ -4,14 +4,14 @@ import {NgForOf, NgIf} from "@angular/common";
 import {GamesService} from "../../services/games.service";
 import {Game} from "../../modules/games";
 import {
-    MatCell, MatCellDef,
-    MatColumnDef,
-    MatHeaderCell, MatHeaderCellDef,
-    MatHeaderRow,
-    MatHeaderRowDef,
-    MatRow,
-    MatRowDef,
-    MatTable
+  MatCell, MatCellDef,
+  MatColumnDef,
+  MatHeaderCell, MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
 } from "@angular/material/table";
 import {HttpClientModule} from "@angular/common/http";
 import {AuthService} from "../../services/auth.service";
@@ -29,8 +29,8 @@ import {OAuthService} from "angular-oauth2-oidc";
 import {ClipboardModule} from "@angular/cdk/clipboard";
 
 @Component({
-    selector: 'app-games-overview',
-    standalone: true,
+  selector: 'app-games-overview',
+  standalone: true,
   imports: [
     ClipboardModule,
     MatButton,
@@ -57,46 +57,43 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
     MatCardActions,
     MatFabButton,
   ],
-    templateUrl: './games-overview.component.html',
-    styleUrl: './games-overview.component.scss'
+  templateUrl: './games-overview.component.html',
+  styleUrl: './games-overview.component.scss'
 })
-export class GamesOverviewComponent implements OnInit
-{
-    public games: Game[] = [];
+export class GamesOverviewComponent implements OnInit {
+  public games: Game[] = [];
 
-    constructor(private gamesService: GamesService, public authService: AuthService, private oAuthService: OAuthService) {
+  constructor(private gamesService: GamesService, public authService: AuthService, private oAuthService: OAuthService) {
 
-    }
-
-    ngOnInit() {
-        this.getGames();
-    }
-
-    getGames() {
-        this.gamesService.getGames().subscribe(
-            response => {
-                this.games = response;
-            }
-        );
-    }
-
-    refreshGame(id: string) {
-        this.gamesService.getGame(id).subscribe(
-            response => {
-                this.games.map((game: Game) => this.games.find((resp: Game) => resp.id === game.id) || game);
-            }
-        )
-    }
-
-  refreshAllGames() {
-      for (let game of this.games) {
-        this.refreshGame(game.id);
-      }
   }
 
-    deleteGame(id: string) {
-        this.gamesService.deleteGame(id);
-        //TODO refresh?
-        //getGames():
-    }
+  ngOnInit() {
+    this.getGames();
+  }
+
+  getGames() {
+    this.gamesService.getGames().subscribe(
+      response => {
+        this.games = response;
+      }
+    );
+  }
+
+  refreshGame(id: string) {
+    this.gamesService.getGame(id).subscribe(
+      (response: Game) => {
+        this.games = this.games.map((game: Game) => game.id === id ? response : game);
+      }
+    );
+  }
+
+  deleteGame(id: string) {
+    this.gamesService.deleteGame(id).subscribe(
+      response => {
+        if (response.status === 204) {
+          this.games = this.games.filter(game => game.id !== id);
+        }
+      }
+    );
+  }
 }
