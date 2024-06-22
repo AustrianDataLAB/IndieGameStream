@@ -75,6 +75,9 @@ export class GamesOverviewComponent implements OnInit {
     this.gamesService.getGames().subscribe(
       response => {
         this.games = response;
+        this.games.filter((game: Game) => game.url).forEach((game: Game) => {
+          this.refreshGame(game.id);
+        });
       }
     );
   }
