@@ -1,0 +1,40 @@
+.left-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.right-toolbar {
+  padding-right: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.toolbar {
+  position: fixed;
+  z-index: 10;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidenav-container {
+  height: 100%;
+  width: 100%;
+  padding-bottom: 100px;
+}
+
+.sidenav-container mat-sidenav {
+  margin-top: 64px;
+}
+
+.sidenav-content {
+  margin-top: 64px;
+  padding: 1rem;
+}
+
+.user-avatar {
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}

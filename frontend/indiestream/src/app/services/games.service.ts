@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHeaders, HttpResponse} from '@angular/common/http';
 import { Game } from '../modules/games';
 import {map, Observable, tap} from "rxjs";
 import { AppConfigService } from "./app-config.service";
@@ -29,8 +29,8 @@ export class GamesService {
     return this.http.get<Game>(this.apiUrl + "/games/" + id);
   }
 
-  deleteGame(id: string): void {
-    this.http.delete(this.apiUrl + "/games/" + id)
+  deleteGame(id: string): Observable<HttpResponse<any>> {
+    return this.http.delete(this.apiUrl + "/games/" + id, { observe: 'response' });
   }
 
   uploadGame(gameForm: FormGroup): Observable<HttpEvent<Object>> {
