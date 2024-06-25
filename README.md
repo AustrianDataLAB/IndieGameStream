@@ -13,6 +13,16 @@ The key features summarized:
 - **Simple game sharing:** Share your game with the world without distributing game files. This means your intellectual property stays secure, and gamers can instantly access your creations.
 - **Instant Play for gamers:** Gamers can play your games without the need to download or install anything. They simply click and play, ensuring a frictionless gaming experience.
 
+## How to use
+The `.github/workflows` directory contains workflows which lay out all steps needed to build the project and get it running on an AKS cluster:
+- [Creating and setting up Azure infrastructure](.github/workflows/deploy-cluster.yml)
+- [Installing components to AKS cluster](.github/workflows/install-components-az.yml)
+- [Upgrading components on AKS cluster](.github/workflows/upgrade-components-az.yml)
+- [Uninstall components from AKS cluster](.github/workflows/uninstall-components-az.yml)
+- [Deleting Azure infrastructure](.github/workflows/purge-cluster.yml)
+
+The project uses the [Tailscale operator](https://tailscale.com/kb/1236/kubernetes-operator) to expose the services to a tailnet instead of the public. All secrets need to be set correctly. Furthermore, a storage account with two blob containers is required (one for Terraform, one for the games). As soon as all components are installed connect to the `frontend` machine in your tailnet on port 80 and enjoy!
+
 ## User experience comic
 ![ux-comic](https://github.com/AustrianDataLAB/IndieGameStream/assets/80053365/d8886fa9-8462-47f0-b1a0-48625181d833)
 
